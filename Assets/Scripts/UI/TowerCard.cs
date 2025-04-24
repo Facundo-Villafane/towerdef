@@ -1,12 +1,13 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems; // Añade esta línea para IBeginDragHandler, etc.
 using TMPro;
 
 /// <summary>
 /// UI component for tower selection cards
 /// </summary>
-public class TowerCard : MonoBehaviour
+public class TowerCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [SerializeField] private Image iconImage;
     [SerializeField] private TextMeshProUGUI nameText;
@@ -22,13 +23,66 @@ public class TowerCard : MonoBehaviour
     private Action<TowerFactory.TowerType> onClickCallback;
     
     public TowerFactory.TowerType TowerType => towerType;
+
+    private RectTransform rectTransform;
+    private Canvas canvas;
+    private CanvasGroup canvasGroup;
+    private Vector2 startPosition;
+    private InputController inputController;
     
     private void Awake()
     {
-        // Add click listener to button
+        // Listener for Card click
         if (selectButton != null)
         {
             selectButton.onClick.AddListener(OnCardClicked);
+        }
+        
+        // Variable initialization
+        rectTransform = GetComponent<RectTransform>();
+        canvas = GetComponentInParent<Canvas>();
+        canvasGroup = GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+        {
+            canvasGroup = gameObject.AddComponent<CanvasGroup>();
+        }
+        inputController = FindObjectOfType<InputController>();
+    }
+
+    // Unity's drag and drop interface methods
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        startPosition = rectTransform.anchoredPosition;
+        canvasGroup.alpha = 0.6f;
+        canvasGroup.blocksRaycasts = false;
+        
+        if (inputController != null)
+        {
+            inputController.StartTowerPlacement(towerType);
+        }
+    }
+    
+    /// <summary>
+    /// Handles dragging of the card
+    /// </summary>
+    public void OnDrag(PointerEventData eventData)
+    {
+        rectTransform.anchoredPosition += eventData.delta / canvas.scaleFactor;
+    }
+    
+    /// <summary>
+    /// Handles the end of the drag event
+    /// </summary>
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        canvasGroup.alpha = 1f;
+        canvasGroup.blocksRaycasts = true;
+        rectTransform.anchoredPosition = startPosition;
+        
+        if (inputController != null)
+        {
+            // This will try to place the tower at the mouse position
+            inputController.TryPlaceTowerAtMousePosition();
         }
     }
     
@@ -72,7 +126,7 @@ public class TowerCard : MonoBehaviour
             costText.text = cost.ToString();
         }
         
-        // Set tooltip/description if needed
+        // Tooltip/description functionality will be added here
     }
     
     /// <summary>

@@ -118,6 +118,11 @@ public class InputController : MonoBehaviour
         // Change color based on valid placement
         bool validPlacement = LevelManager.Instance.CanPlaceTower(snappedPos);
         UpdatePreviewColor(validPlacement);
+
+        if (validPlacement)
+        {
+            // Add a effect to indicate valid placement
+        }
     }
     
     /// <summary>
@@ -151,6 +156,15 @@ public class InputController : MonoBehaviour
                 towerPreview = null;
                 isPlacingTower = false;
             }
+        }
+    }
+
+    public void TryPlaceTowerAtMousePosition()
+    {
+        // If we are trying to place a tower, check if we can place it at the mouse position
+        if (isPlacingTower && towerPreview != null)
+        {
+            PlaceTower();
         }
     }
 
@@ -219,8 +233,8 @@ public class InputController : MonoBehaviour
     /// </summary>
     private Vector3 SnapToGrid(Vector3 position)
     {
-        // Simple grid snapping - adjust grid size as needed
-        float gridSize = 1.0f;
+        // Grid size
+        float gridSize = 0.32f;
         
         float x = Mathf.Round(position.x / gridSize) * gridSize;
         float y = Mathf.Round(position.y / gridSize) * gridSize;

@@ -37,7 +37,9 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
         // Subscribe to events
         GameManager.Instance.OnGoldChanged += UpdateGoldDisplay;
         GameManager.Instance.OnLivesChanged += UpdateLivesDisplay;
-        SimpleWaveManager.Instance.OnWaveStarted += UpdateWaveDisplay;
+        SimpleWaveManager.Instance.OnWaveStarted += UpdateWaveDisplay;              
+        SimpleWaveManager.Instance.OnWaveCompleted += OnWaveCompletedHandler;
+        SimpleWaveManager.Instance.OnAllWavesCompleted += OnAllWavesCompletedHandler;
         
         // Initial display
         UpdateGoldDisplay(GameManager.Instance.Gold);
@@ -46,6 +48,32 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
         
         // Create tower cards
         CreateTowerCards();
+    }
+    
+    /// <summary>
+    /// Handles wave completion
+    /// </summary>
+    private void OnWaveCompletedHandler(int currentWave, int totalWaves)
+    {
+        // Update the wave display
+        UpdateWaveDisplay(currentWave, totalWaves);
+        
+        // Optionally add rewards or show message
+        Debug.Log($"Wave {currentWave} completed! {totalWaves - currentWave} waves remaining.");
+        
+        // Example: Give bonus gold between waves
+        GameManager.Instance.AddGold(50);
+    }
+    
+    /// <summary>
+    /// Handles when all waves are completed
+    /// </summary>
+    private void OnAllWavesCompletedHandler(int finalScore)
+    {
+        Debug.Log($"All waves completed! Final score: {finalScore}");
+        
+        // Trigger victory condition
+        GameManager.Instance.Victory();
     }
     
     /// <summary>
@@ -183,4 +211,36 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     }
     
     #endregion
+    
+    /// <summary>
+    /// Shows the victory panel
+    /// </summary>
+    public void ShowVictoryPanel()
+    {
+        // Implement victory panel logic
+        Debug.Log("Showing victory panel");
+        
+        // Find and activate victory panel
+        Transform victoryPanel = transform.Find("VictoryPanel");
+        if (victoryPanel != null)
+        {
+            victoryPanel.gameObject.SetActive(true);
+        }
+    }
+    
+    /// <summary>
+    /// Shows the defeat panel
+    /// </summary>
+    public void ShowDefeatPanel()
+    {
+        // Implement defeat panel logic
+        Debug.Log("Showing defeat panel");
+        
+        // Find and activate defeat panel
+        Transform defeatPanel = transform.Find("DefeatPanel");
+        if (defeatPanel != null)
+        {
+            defeatPanel.gameObject.SetActive(true);
+        }
+    }
 }

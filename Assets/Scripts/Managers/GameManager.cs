@@ -17,6 +17,8 @@ public class GameManager : Singleton<GameManager>
     private int gold;
     private int score;
     private GameState currentState = GameState.MainMenu;
+    private int currentLevel = 1;
+    private bool[] levelsUnlocked = new bool[3] { true, false, false };
     
     // Properties
     public int Lives => lives;
@@ -94,11 +96,13 @@ public class GameManager : Singleton<GameManager>
             case GameState.Victory:
                 // Handle victory
                 Debug.Log("Victory!");
+                ShowVictoryScreen();
                 break;
                 
             case GameState.Defeat:
                 // Handle defeat
                 Debug.Log("Defeat!");
+                ShowDefeatScreen();
                 break;
         }
     }
@@ -145,6 +149,72 @@ public class GameManager : Singleton<GameManager>
         if (lives <= 0)
         {
             ChangeState(GameState.Defeat);
+        }
+    }
+    
+    /// <summary>
+    /// Victory condition
+    /// </summary>
+    public void Victory()
+    {
+        ChangeState(GameState.Victory);
+        
+        // Unlock next level
+        int nextLevel = GetCurrentLevel() + 1;
+        if (nextLevel <= 3) // Right now we have 3 levels
+        {
+            UnlockLevel(nextLevel);
+        }
+    }
+    
+    /// <summary>
+    /// Get current level
+    /// </summary>
+    public int GetCurrentLevel()
+    {
+        return currentLevel;
+    }
+    
+    /// <summary>
+    /// Unlock a level
+    /// </summary>
+    public void UnlockLevel(int level)
+    {
+        if (level >= 1 && level <= levelsUnlocked.Length)
+        {
+            levelsUnlocked[level - 1] = true;
+        }
+    }
+    
+    /// <summary>
+    /// Show victory screen
+    /// </summary>
+    private void ShowVictoryScreen()
+    {
+        // Show victory message
+        Debug.Log("¡Victoria!");
+        
+        // Activate victory panel if it exists
+        GameObject victoryPanel = GameObject.Find("VictoryPanel");
+        if (victoryPanel != null)
+        {
+            victoryPanel.SetActive(true);
+        }
+    }
+    
+    /// <summary>
+    /// Show defeat screen
+    /// </summary>
+    private void ShowDefeatScreen()
+    {
+        // Show defeat message
+        Debug.Log("¡Derrota!");
+        
+        // Activate defeat panel if it exists
+        GameObject defeatPanel = GameObject.Find("DefeatPanel");
+        if (defeatPanel != null)
+        {
+            defeatPanel.SetActive(true);
         }
     }
     
