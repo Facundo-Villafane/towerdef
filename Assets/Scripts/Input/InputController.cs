@@ -14,6 +14,8 @@ public class InputController : MonoBehaviour
     [Header("Tower Placement")]
     [SerializeField] private Transform towerParent;
     [SerializeField] private LayerMask placementLayerMask;
+    [SerializeField] private LayerMask pathLayerMask;
+    [SerializeField] private LayerMask towerLayerMask;
     
     // Current state
     private TowerFactory.TowerType selectedTowerType;
@@ -31,6 +33,10 @@ public class InputController : MonoBehaviour
         {
             towerParent = new GameObject("Towers").transform;
         }
+
+        // Get layer masks for path and tower layers
+        pathLayerMask = LayerMask.GetMask("Path");
+        towerLayerMask = LayerMask.GetMask("Tower");
     }
     
     private void Update()
@@ -122,6 +128,9 @@ public class InputController : MonoBehaviour
         if (towerPreview == null) return;
         
         Vector3 position = towerPreview.transform.position;
+
+        // Debug log for placement attempt
+        Debug.Log($"Attempting to place tower at: {position}");
         
         // Check if position is valid for placement
         if (LevelManager.Instance.CanPlaceTower(position))
@@ -143,6 +152,28 @@ public class InputController : MonoBehaviour
                 isPlacingTower = false;
             }
         }
+    }
+
+    private bool CanPlaceTowerAtPosition(Vector2 position)
+    {
+        // Check if the position is on the path using a raycast
+        RaycastHit2D hit = Physics2D.Raycast(position, Vector2.zero, 0f, pathLayerMask);
+        
+        // If we hit the path, we cannot place a tower here
+        if (hit.collider != null)
+        {
+            return false;
+        }
+        
+        // Check if the position is occupied by another tower
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(position, 0.3f, towerLayerMask);
+        if (colliders.Length > 0)
+        {
+            return false;
+        }
+        
+        // If we reach here, the position is valid for tower placement
+        return true;
     }
     
     /// <summary>
