@@ -21,6 +21,7 @@ public class InputController : MonoBehaviour
     private TowerFactory.TowerType selectedTowerType;
     private GameObject towerPreview;
     private bool isPlacingTower = false;
+    private bool isDraggingTower = false;
     
     private void Start()
     {
@@ -45,7 +46,7 @@ public class InputController : MonoBehaviour
         if (GameManager.Instance.CurrentState != GameManager.GameState.Gameplay)
             return;
         
-        // Handle tower placement
+        // Handle tower placement via click
         if (isPlacingTower)
         {
             UpdateTowerPreview();
@@ -62,6 +63,11 @@ public class InputController : MonoBehaviour
                 CancelTowerPlacement();
             }
         }
+        // Handle tower placement via drag
+        else if (isDraggingTower) 
+        {
+            UpdateTowerPreview();
+        }
         
         // Handle undo with Ctrl+Z
         if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.Z))
@@ -71,12 +77,12 @@ public class InputController : MonoBehaviour
     }
     
     /// <summary>
-    /// Starts the tower placement process
+    /// Starts the tower placement process via clicking
     /// </summary>
     public void StartTowerPlacement(TowerFactory.TowerType towerType)
     {
         // Already placing a tower, cancel it first
-        if (isPlacingTower)
+        if (isPlacingTower || isDraggingTower)
         {
             CancelTowerPlacement();
         }
@@ -95,6 +101,52 @@ public class InputController : MonoBehaviour
         if (towerPreview != null)
         {
             isPlacingTower = true;
+            isDraggingTower = false;
+        }
+    }
+    
+    /// <summary>
+    /// Starts the tower placement process via dragging
+    /// </summary>
+    public GameObject StartDragPlacement(TowerFactory.TowerType towerType)
+    {
+        // Already placing a tower, cancel it first
+        if (isPlacingTower || isDraggingTower)
+        {
+            CancelTowerPlacement();
+        }
+        
+        selectedTowerType = towerType;
+        
+        // Check if player can afford this tower
+        if (!towerFactory.CanAffordTower(selectedTowerType))
+        {
+            Debug.Log("Not enough gold to build this tower!");
+            return null;
+        }
+        
+        // Create tower preview
+        towerPreview = towerFactory.CreateTowerPreview(selectedTowerType);
+        if (towerPreview != null)
+        {
+            isPlacingTower = false;
+            isDraggingTower = true;
+            
+            // Set initial position to mouse position
+            UpdateTowerPreview();
+        }
+        
+        return towerPreview;
+    }
+    
+    /// <summary>
+    /// Updates the tower preview position to follow mouse during drag
+    /// </summary>
+    public void UpdateDragPosition()
+    {
+        if (isDraggingTower)
+        {
+            UpdateTowerPreview();
         }
     }
     
@@ -118,11 +170,6 @@ public class InputController : MonoBehaviour
         // Change color based on valid placement
         bool validPlacement = LevelManager.Instance.CanPlaceTower(snappedPos);
         UpdatePreviewColor(validPlacement);
-
-        if (validPlacement)
-        {
-            // Add a effect to indicate valid placement
-        }
     }
     
     /// <summary>
@@ -134,7 +181,7 @@ public class InputController : MonoBehaviour
         
         // Get mouse position in world coordinates
         Vector3 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-        mousePos.z = 0; // Asegurarnos que está en el plano Z correcto
+        mousePos.z = 0;
         
         // Adjust position to snap to grid
         Vector3 position = SnapToGrid(mousePos);
@@ -159,12 +206,18 @@ public class InputController : MonoBehaviour
                 Destroy(towerPreview);
                 towerPreview = null;
                 isPlacingTower = false;
+                isDraggingTower = false;
             }
         }
     }
 
+    /// <summary>
+    /// Places the tower at the current mouse position (for drag & drop)
+    /// </summary>
     public void TryPlaceTowerAtMousePosition()
     {
+        if (towerPreview == null) return;
+        
         // Dragging the mouse we get the position
         Vector3 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
         mousePos.z = 0;
@@ -194,6 +247,7 @@ public class InputController : MonoBehaviour
         }
         
         isPlacingTower = false;
+        isDraggingTower = false;
     }
 
     private bool CanPlaceTowerAtPosition(Vector2 position)
@@ -230,6 +284,7 @@ public class InputController : MonoBehaviour
         }
         
         isPlacingTower = false;
+        isDraggingTower = false;
     }
     
     /// <summary>
@@ -245,8 +300,7 @@ public class InputController : MonoBehaviour
         foreach (Renderer r in renderers)
         {
             // Apply color based on validity
-            Color color = validPlacement ? Color.green : Color.red;
-            color.a = 0.5f; // Semi-transparent
+            Color color = validPlacement ? new Color(0, 1, 0, 0.5f) : new Color(1, 0, 0, 0.5f);
             
             // Apply to all materials
             foreach (Material mat in r.materials)

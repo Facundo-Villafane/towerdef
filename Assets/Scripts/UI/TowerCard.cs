@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.EventSystems; // Añade esta línea para IBeginDragHandler, etc.
+using UnityEngine.EventSystems;
 using TMPro;
 
 /// <summary>
@@ -22,23 +22,23 @@ public class TowerCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     private TowerFactory.TowerType towerType;
     private Action<TowerFactory.TowerType> onClickCallback;
     
-    public TowerFactory.TowerType TowerType => towerType;
-
+    // Drag & drop variables
     private RectTransform rectTransform;
     private Canvas canvas;
     private CanvasGroup canvasGroup;
     private Vector2 startPosition;
     private InputController inputController;
+    private TowerFactory towerFactory;
+    private Camera mainCamera;
+    
+    // Tower preview
+    private GameObject towerPreview;
+    
+    public TowerFactory.TowerType TowerType => towerType;
     
     private void Awake()
     {
-        // Listener for Card click
-        if (selectButton != null)
-        {
-            selectButton.onClick.AddListener(OnCardClicked);
-        }
-        
-        // Variable initialization
+        // Get references
         rectTransform = GetComponent<RectTransform>();
         canvas = GetComponentInParent<Canvas>();
         canvasGroup = GetComponent<CanvasGroup>();
@@ -46,53 +46,164 @@ public class TowerCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         {
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
         }
-        inputController = FindObjectOfType<InputController>();
-    }
-
-    // Unity's drag and drop interface methods
-    public void OnBeginDrag(PointerEventData eventData)
-    {
-        startPosition = rectTransform.anchoredPosition;
-        canvasGroup.alpha = 0.6f;
-        canvasGroup.blocksRaycasts = false;
         
-        if (inputController != null)
+        inputController = FindObjectOfType<InputController>();
+        towerFactory = FindObjectOfType<TowerFactory>();
+        mainCamera = Camera.main;
+        
+        // Listener for Card click
+        if (selectButton != null)
         {
-            inputController.StartTowerPlacement(towerType);
+            selectButton.onClick.AddListener(OnCardClicked);
         }
     }
     
     /// <summary>
-    /// Handles dragging of the card
+    /// Handles the start of drag
     /// </summary>
-    public void OnDrag(PointerEventData eventData)
+    public void OnBeginDrag(PointerEventData eventData)
     {
-        rectTransform.anchoredPosition += eventData.delta / canvas.scaleFactor;
+        // Store original position
+        startPosition = rectTransform.anchoredPosition;
+        
+        // Make the card semi-transparent
+        canvasGroup.alpha = 0.6f;
+        canvasGroup.blocksRaycasts = false;
+        
+        // Check if player can afford this tower
+        if (towerFactory != null && !towerFactory.CanAffordTower(towerType))
+        {
+            Debug.Log("Not enough gold to build this tower!");
+            return;
+        }
+        
+        // Create tower preview directly
+        if (towerFactory != null)
+        {
+            towerPreview = towerFactory.CreateTowerPreview(towerType);
+            
+            if (towerPreview != null)
+            {
+                // Set initial position to mouse
+                UpdateTowerPreviewPosition(eventData);
+            }
+        }
     }
     
     /// <summary>
-    /// Handles the end of the drag event
+    /// Handles the drag
+    /// </summary>
+    public void OnDrag(PointerEventData eventData)
+    {
+        // Update tower preview position
+        if (towerPreview != null)
+        {
+            UpdateTowerPreviewPosition(eventData);
+        }
+    }
+    
+    /// <summary>
+    /// Handles the end of drag
     /// </summary>
     public void OnEndDrag(PointerEventData eventData)
     {
+        // Reset the card appearance
         canvasGroup.alpha = 1f;
         canvasGroup.blocksRaycasts = true;
         rectTransform.anchoredPosition = startPosition;
         
-        if (inputController != null)
+        // Try to place the tower at current mouse position
+        if (towerPreview != null)
         {
-            // This will try to place the tower at the mouse position
-            inputController.TryPlaceTowerAtMousePosition();
+            Vector3 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            mousePos.z = 0;
+            
+            // Snap to grid
+            Vector3 position = SnapToGrid(mousePos);
+            
+            // Check if placement is valid
+            if (LevelManager.Instance != null && LevelManager.Instance.CanPlaceTower(position))
+            {
+                // Create the tower
+                PlaceTowerCommand command = new PlaceTowerCommand(
+                    towerType,
+                    position,
+                    towerFactory,
+                    LevelManager.Instance
+                );
+                
+                if (CommandManager.Instance != null)
+                {
+                    CommandManager.Instance.ExecuteCommand(command);
+                }
+            }
+            
+            // Clean up preview
+            Destroy(towerPreview);
+            towerPreview = null;
         }
     }
     
-    private void OnDestroy()
+    /// <summary>
+    /// Updates the tower preview position
+    /// </summary>
+    private void UpdateTowerPreviewPosition(PointerEventData eventData)
     {
-        // Remove click listener
-        if (selectButton != null)
+        if (towerPreview != null && mainCamera != null)
         {
-            selectButton.onClick.RemoveListener(OnCardClicked);
+            // Get mouse position in world coordinates
+            Vector3 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            mousePos.z = 0;
+            
+            // Snap position to grid
+            Vector3 snappedPos = SnapToGrid(mousePos);
+            
+            // Update preview position
+            towerPreview.transform.position = snappedPos;
+            
+            // Update color based on placement validity
+            bool validPlacement = LevelManager.Instance != null && 
+                                 LevelManager.Instance.CanPlaceTower(snappedPos);
+            
+            UpdatePreviewColor(validPlacement);
         }
+    }
+    
+    /// <summary>
+    /// Updates the preview color based on placement validity
+    /// </summary>
+    private void UpdatePreviewColor(bool validPlacement)
+    {
+        if (towerPreview == null) return;
+        
+        // Get all renderers in preview
+        Renderer[] renderers = towerPreview.GetComponentsInChildren<Renderer>();
+        
+        foreach (Renderer r in renderers)
+        {
+            // Apply color based on validity
+            Color color = validPlacement ? new Color(0, 1, 0, 0.5f) : new Color(1, 0, 0, 0.5f);
+            
+            // Apply to all materials
+            foreach (Material mat in r.materials)
+            {
+                mat.color = color;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Snaps a position to the grid
+    /// </summary>
+    private Vector3 SnapToGrid(Vector3 position)
+    {
+        // Grid size
+        float gridSize = 0.32f;
+        
+        float x = Mathf.Round(position.x / gridSize) * gridSize;
+        float y = Mathf.Round(position.y / gridSize) * gridSize;
+        
+        return new Vector3(x, y, 0);
     }
     
     /// <summary>
@@ -125,8 +236,6 @@ public class TowerCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
         {
             costText.text = cost.ToString();
         }
-        
-        // Tooltip/description functionality will be added here
     }
     
     /// <summary>
@@ -153,5 +262,21 @@ public class TowerCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     private void OnCardClicked()
     {
         onClickCallback?.Invoke(towerType);
+    }
+    
+    private void OnDestroy()
+    {
+        // Remove click listener
+        if (selectButton != null)
+        {
+            selectButton.onClick.RemoveListener(OnCardClicked);
+        }
+        
+        // Clean up tower preview
+        if (towerPreview != null)
+        {
+            Destroy(towerPreview);
+            towerPreview = null;
+        }
     }
 }
