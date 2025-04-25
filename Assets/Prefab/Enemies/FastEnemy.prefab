@@ -14,9 +14,9 @@ GameObject:
   - component: {fileID: 621597636814076762}
   - component: {fileID: 8163926963892781141}
   - component: {fileID: 3847263913776569208}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: FastEnemy
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -30,7 +30,7 @@ Transform:
   m_GameObject: {fileID: 960733839252713845}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.9762878, y: 0.11884324, z: 0.6604015}
+  m_LocalPosition: {x: 2.9762878, y: 0.11884324, z: -1}
   m_LocalScale: {x: 1.66, y: 1.66, z: 1.66}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -74,8 +74,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 1168037855
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_Sprite: {fileID: 2051447427, guid: 197e0ded4a4e20b48bdaee62ce18b633, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -122,7 +122,7 @@ CircleCollider2D:
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
-  m_Radius: 0.5
+  m_Radius: 0.14
 --- !u!50 &621597636814076762
 Rigidbody2D:
   serializedVersion: 4
@@ -184,9 +184,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyName: 
-  maxHealth: 70
-  moveSpeed: 3.5
-  goldReward: 15
+  maxHealth: 10
+  moveSpeed: 0.6
+  goldReward: 25
   damageToPlayer: 1
   trailEffect: {fileID: 0}
   dodgeChance: 0.2

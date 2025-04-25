@@ -132,18 +132,22 @@ public class InputController : MonoBehaviour
     {
         if (towerPreview == null) return;
         
-        Vector3 position = towerPreview.transform.position;
-
-        // Debug log for placement attempt
-        Debug.Log($"Attempting to place tower at: {position}");
+        // Get mouse position in world coordinates
+        Vector3 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        mousePos.z = 0; // Asegurarnos que está en el plano Z correcto
         
-        // Check if position is valid for placement
+        // Adjust position to snap to grid
+        Vector3 position = SnapToGrid(mousePos);
+        
+        Debug.Log($"Trying to place tower at: {position}");
+        
+        // Check if its a valid position to place the tower
         if (LevelManager.Instance.CanPlaceTower(position))
         {
-            // Create a command for tower placement
+            // Create the command to place the tower
             PlaceTowerCommand command = new PlaceTowerCommand(
                 selectedTowerType, 
-                position, 
+                position, // Position to place the tower
                 towerFactory, 
                 LevelManager.Instance
             );
@@ -151,7 +155,7 @@ public class InputController : MonoBehaviour
             // Execute the command
             if (CommandManager.Instance.ExecuteCommand(command))
             {
-                // Successfully placed, clean up preview
+                // Clear the preview and reset state
                 Destroy(towerPreview);
                 towerPreview = null;
                 isPlacingTower = false;
@@ -161,11 +165,35 @@ public class InputController : MonoBehaviour
 
     public void TryPlaceTowerAtMousePosition()
     {
-        // If we are trying to place a tower, check if we can place it at the mouse position
-        if (isPlacingTower && towerPreview != null)
+        // Dragging the mouse we get the position
+        Vector3 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        mousePos.z = 0;
+        
+        // Adjust position to snap to grid
+        Vector3 position = SnapToGrid(mousePos);
+        
+        // Check if its a valid position to place the tower
+        if (LevelManager.Instance.CanPlaceTower(position))
         {
-            PlaceTower();
+            // If valid, create the command to place the tower
+            PlaceTowerCommand command = new PlaceTowerCommand(
+                selectedTowerType,
+                position,
+                towerFactory,
+                LevelManager.Instance
+            );
+            
+            CommandManager.Instance.ExecuteCommand(command);
         }
+        
+        // Clear the preview
+        if (towerPreview != null)
+        {
+            Destroy(towerPreview);
+            towerPreview = null;
+        }
+        
+        isPlacingTower = false;
     }
 
     private bool CanPlaceTowerAtPosition(Vector2 position)

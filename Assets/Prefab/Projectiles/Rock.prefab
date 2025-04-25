@@ -28,7 +28,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -1.609, y: -1.474, z: 0}
-  m_LocalScale: {x: 1.28, y: 1.28, z: 1.28}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
@@ -71,9 +71,9 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingLayerID: -1314279419
+  m_SortingLayer: 5
+  m_SortingOrder: 2
   m_Sprite: {fileID: 21300000, guid: 5e543c9425c7fe84c9434e84f785b8ce, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -99,4 +99,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rockSprite: {fileID: 6934859603847622520}
   impactEffectPrefab: {fileID: 0}
-  rotationSpeed: 180
+  rotationSpeed: 90
+  minImpactDistance: 0.2
+  speedMultiplier: 2.22

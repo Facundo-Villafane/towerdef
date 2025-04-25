@@ -40,35 +40,35 @@ public class TowerFactory : MonoBehaviour
     }
     
     /// <summary>
-    /// Creates a tower of the specified type at the given position
-    /// </summary>
-    public Tower CreateTower(TowerType type, Vector3 position)
+/// Creates a tower of the specified type at the given position
+/// </summary>
+public Tower CreateTower(TowerType type, Vector3 position)
+{
+    // Check if enough gold
+    if (!CanAffordTower(type))
     {
-        // Check if enough gold
-        if (!CanAffordTower(type))
-        {
-            Debug.Log("Not enough gold to build this tower!");
-            return null;
-        }
-        
-        // Get prefab from dictionary
-        if (towerDictionary.TryGetValue(type, out TowerPrefab towerPrefab))
-        {
-            // Instantiate tower
-            GameObject towerObj = Instantiate(towerPrefab.prefab, position, Quaternion.identity);
-            Tower tower = towerObj.GetComponent<Tower>();
-            
-            if (tower != null)
-            {
-                // Deduct gold cost
-                GameManager.Instance.SpendGold(towerPrefab.cost);
-                
-                return tower;
-            }
-        }
-        
+        Debug.Log("Not enough gold to build this tower!");
         return null;
     }
+    
+    // Get prefab from dictionary
+    if (towerDictionary.TryGetValue(type, out TowerPrefab towerPrefab))
+    {
+        // Instantiate tower
+        GameObject towerObj = Instantiate(towerPrefab.prefab, position, Quaternion.identity);
+        Tower tower = towerObj.GetComponent<Tower>();
+        
+        if (tower != null)
+        {
+            // Deduct gold cost
+            GameManager.Instance.SpendGold(towerPrefab.cost);
+            
+            return tower;
+        }
+    }
+    
+    return null;
+}
     
     /// <summary>
     /// Creates a preview of the tower (for placement)

@@ -15,10 +15,10 @@ public class FastEnemy : Enemy
         base.Awake();
         
         // Set specific properties for fast enemy
-        enemyName = "Fast Runner";
-        maxHealth = 70f;
-        moveSpeed = 3.5f;
-        goldReward = 15;
+        //enemyName = "Fast Runner";
+        //maxHealth = 70f;
+        //moveSpeed = 3.5f;
+        //goldReward = 15;
     }
     
     public override float TakeDamage(float amount)

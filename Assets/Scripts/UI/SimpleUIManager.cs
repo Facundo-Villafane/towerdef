@@ -49,6 +49,15 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
         // Create tower cards
         CreateTowerCards();
     }
+
+    public void StartWaves()
+    {
+        if (SimpleWaveManager.Instance != null)
+        {
+            SimpleWaveManager.Instance.StartWaves();
+            Debug.Log("Waves started!");
+        }
+    }
     
     /// <summary>
     /// Handles wave completion

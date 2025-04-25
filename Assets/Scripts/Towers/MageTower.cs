@@ -17,13 +17,13 @@ public class MageTower : Tower
     protected override void Start()
     {
         base.Start();
-        towerName = "Mage Tower";
+        //towerName = "Mage Tower";
         
         // Set default properties for mage tower
-        range = 4.5f;
-        attackSpeed = 0.8f;
-        damage = 25f;
-        cost = 150;
+        //range = 4.5f;
+        //attackSpeed = 0.8f;
+        //damage = 25f;
+        //cost = 150;
     }
     
     /// <summary>

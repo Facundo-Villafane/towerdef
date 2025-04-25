@@ -35,6 +35,17 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         }
     }
     
+    // For debugging purposes only!!
+    private void Start()
+    {
+        List<Vector2> path = FindObjectOfType<LevelManager>().GetPath();
+        Debug.Log($"Path points: {path.Count}");
+        foreach (var point in path)
+        {
+            Debug.Log($"Path point: {point}");
+        }
+    }
+    
     private void Update()
     {
         if (!wavesActive) return;
@@ -57,10 +68,13 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         currentWave = 0;
         enemiesRemainingInWave = 0;
         wavesActive = false;
+        
+        Debug.Log($"SimpleWaveManager initialized with level {level} and difficulty {difficulty}");
     }
     
     public void StartWaves()
     {
+        Debug.Log("StartWaves called - beginning wave spawning");
         wavesActive = true;
         StartNextWave();
     }
@@ -71,10 +85,12 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
     public void StartNextWave()
     {
         currentWave++;
+        Debug.Log($"Starting wave {currentWave} of {totalWaves}");
         
         // Check if all waves are completed
         if (currentWave > totalWaves)
         {
+            Debug.Log("All waves completed!");
             OnAllWavesCompleted?.Invoke(100);
             return;
         }
@@ -84,6 +100,7 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         enemiesRemainingInWave = enemyCount;
         
         // Notify listeners
+        Debug.Log($"Invoking OnWaveStarted event with {currentWave}, {totalWaves}");
         OnWaveStarted?.Invoke(currentWave, totalWaves);
         
         // Start spawning enemies
@@ -100,6 +117,9 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
             yield break;
         }
         
+        Debug.Log($"Spawning {count} enemies on path with {path.Count} points");
+        Debug.Log($"First path point: {path[0]}, Last path point: {path[path.Count - 1]}");
+        
         // Health and speed increase with wave number
         float healthMultiplier = 1f + (currentWave - 1) * 0.1f;
         float speedMultiplier = 1f + (currentWave - 1) * 0.05f;
@@ -112,7 +132,10 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
             if (enemyPrefab != null)
             {
                 // Spawn enemy
-                GameObject enemyObj = Instantiate(enemyPrefab, path[0], Quaternion.identity, enemyParent);
+                Vector3 spawnPosition = new Vector3(path[0].x, path[0].y, -1f);
+                GameObject enemyObj = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity, enemyParent);
+                Debug.Log($"Enemy spawned at {path[0]}");
+                
                 Enemy enemy = enemyObj.GetComponent<Enemy>();
                 
                 if (enemy != null)
@@ -124,7 +147,17 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
                     // Subscribe to events
                     enemy.OnEnemyDeath += OnEnemyDefeated;
                     enemy.OnEnemyReachedEnd += OnEnemyReachedEnd;
+                    
+                    Debug.Log($"Enemy initialized with health multiplier {healthMultiplier} and speed multiplier {speedMultiplier}");
                 }
+                else
+                {
+                    Debug.LogError("Enemy component not found on prefab!");
+                }
+            }
+            else
+            {
+                Debug.LogError("No enemy prefab selected!");
             }
             
             // Wait before spawning next enemy
@@ -133,12 +166,16 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         
         // Start timer for next wave
         waveTimer = timeBetweenWaves;
+        Debug.Log($"All enemies spawned. Next wave in {timeBetweenWaves} seconds");
     }
     
     private GameObject SelectEnemyPrefab()
     {
         if (enemyPrefabs == null || enemyPrefabs.Length == 0)
+        {
+            Debug.LogError("No enemy prefabs assigned!");
             return null;
+        }
             
         // Simple selection logic based on wave progression
         float waveProgress = (float)currentWave / totalWaves;
@@ -148,10 +185,12 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         {
             // Select from stronger enemies
             int index = Random.Range(1, enemyPrefabs.Length);
+            Debug.Log($"Selected stronger enemy type index: {index}");
             return enemyPrefabs[index];
         }
         
         // Default to basic enemy
+        Debug.Log("Selected basic enemy type");
         return enemyPrefabs[0];
     }
     
@@ -167,6 +206,7 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         
         // Update counter
         enemiesRemainingInWave--;
+        Debug.Log($"Enemy defeated. Remaining: {enemiesRemainingInWave}");
         CheckWaveComplete();
     }
     
@@ -178,6 +218,7 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         
         // Damage player
         GameManager.Instance.LoseLife(enemy.DamageToPlayer);
+        Debug.Log($"Enemy reached end. Player lost {enemy.DamageToPlayer} lives");
         
         // Update counter
         enemiesRemainingInWave--;
@@ -189,6 +230,7 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         if (enemiesRemainingInWave <= 0)
         {
             // Notify wave completed
+            Debug.Log($"Wave {currentWave} completed!");
             OnWaveCompleted?.Invoke(currentWave, totalWaves);
         }
     }

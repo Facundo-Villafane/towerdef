@@ -18,6 +18,9 @@ public abstract class Tower : MonoBehaviour, IUpgradeable
     [SerializeField] protected int maxUpgradeLevel = 3;
     [SerializeField] protected GameObject rangeIndicator;
     
+    [Header("Debug")]
+    [SerializeField] private bool debugMode = false;
+    
     // Targeting properties
     protected List<Enemy> enemiesInRange = new List<Enemy>();
     protected Enemy currentTarget;
@@ -25,6 +28,7 @@ public abstract class Tower : MonoBehaviour, IUpgradeable
     
     // Tower state
     protected bool isPlaced = false;
+    protected bool isFacingRight = false; // Used for sprite flipping
     
     // Properties
     public float Range => range;
@@ -45,6 +49,8 @@ public abstract class Tower : MonoBehaviour, IUpgradeable
     {
         attackTimer = 0f;
         UpdateRangeIndicator();
+        
+        Debug.Log($"Tower {name} started. Range: {range}, Attack Speed: {attackSpeed}, isPlaced: {isPlaced}");
     }
     
     protected virtual void Update()
@@ -57,6 +63,11 @@ public abstract class Tower : MonoBehaviour, IUpgradeable
         if (currentTarget == null || !IsTargetValid())
         {
             FindTarget();
+        }
+        else
+        {
+            // Update the orientation to face the target
+            UpdateModelOrientation();
         }
         
         // Attack if we have a target and timer is ready
@@ -72,8 +83,11 @@ public abstract class Tower : MonoBehaviour, IUpgradeable
     /// </summary>
     public virtual void PlaceTower(Vector3 position)
     {
+        Debug.Log($"Tower.PlaceTower called with position: {position}");
         transform.position = position;
+        Debug.Log($"Tower position after setting: {transform.position}");
         isPlaced = true;
+        Debug.Log($"Tower {name} placed at {position}, isPlaced = {isPlaced}");
         OnTowerPlaced?.Invoke(this);
     }
     
@@ -137,9 +151,30 @@ public abstract class Tower : MonoBehaviour, IUpgradeable
     {
         // Clear and repopulate enemies in range
         enemiesInRange.Clear();
+
+        // Verificar la capa Enemy
+        int enemyLayerMask = LayerMask.GetMask("Enemy");
+        Debug.Log($"Enemy layer mask value: {enemyLayerMask}");
+        
+        if (enemyLayerMask == 0)
+        {
+            Debug.LogError("La capa 'Enemy' no existe o no está correctamente configurada!");
+        }
+
+        Debug.Log($"Tower {name}: Buscando enemigos en rango {range}");
         
         // Find all enemies in range
-        Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, range, LayerMask.GetMask("Enemy"));
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, range, enemyLayerMask);
+        Debug.Log($"Tower {name}: Encontrados {colliders.Length} colliders dentro del rango");
+        
+        // Intenta detectar enemigos sin filtro de capa
+        Collider2D[] allColliders = Physics2D.OverlapCircleAll(transform.position, range);
+        Debug.Log($"Tower {name}: Total de colliders (cualquier capa): {allColliders.Length}");
+        
+        foreach (var col in allColliders)
+        {
+            Debug.Log($"- Collider: {col.name}, Layer: {LayerMask.LayerToName(col.gameObject.layer)}");
+        }
         
         foreach (Collider2D collider in colliders)
         {
@@ -147,6 +182,11 @@ public abstract class Tower : MonoBehaviour, IUpgradeable
             if (enemy != null && enemy.IsAlive)
             {
                 enemiesInRange.Add(enemy);
+                Debug.Log($"Tower {name}: Enemigo añadido a la lista: {enemy.name}");
+            }
+            else
+            {
+                Debug.Log($"Tower {name}: Collider no es un enemigo válido: {collider.name}");
             }
         }
         
@@ -154,10 +194,22 @@ public abstract class Tower : MonoBehaviour, IUpgradeable
         if (enemiesInRange.Count > 0)
         {
             currentTarget = GetFirstEnemyInPath();
+            Debug.Log($"Tower {name}: Objetivo seleccionado: {currentTarget.name}");
         }
         else
         {
             currentTarget = null;
+            Debug.Log($"Tower {name}: No hay enemigos en rango");
+            
+            // Buscar todos los enemigos en la escena
+            GameObject[] allEnemies = GameObject.FindGameObjectsWithTag("Enemy");
+            Debug.Log($"Total de enemigos en la escena: {allEnemies.Length}");
+            
+            foreach (var enemyObj in allEnemies)
+            {
+                float distance = Vector2.Distance(transform.position, enemyObj.transform.position);
+                Debug.Log($"- Enemigo: {enemyObj.name}, Distancia: {distance}, Layer: {LayerMask.LayerToName(enemyObj.layer)}");
+            }
         }
     }
     
@@ -175,6 +227,7 @@ public abstract class Tower : MonoBehaviour, IUpgradeable
             {
                 highestProgress = enemy.PathProgress;
                 firstEnemy = enemy;
+                Debug.Log($"Tower {name}: Encontrado enemigo con mayor progreso: {enemy.name}, Progreso: {enemy.PathProgress}");
             }
         }
         
@@ -187,12 +240,53 @@ public abstract class Tower : MonoBehaviour, IUpgradeable
     protected virtual bool IsTargetValid()
     {
         if (currentTarget == null || !currentTarget.IsAlive)
+        {
+            Debug.Log($"Tower {name}: Target inválido o muerto");
             return false;
+        }
             
         float distanceToTarget = Vector2.Distance(transform.position, currentTarget.transform.position);
-        return distanceToTarget <= range;
+        bool inRange = distanceToTarget <= range;
+        
+        if (!inRange)
+        {
+            Debug.Log($"Tower {name}: Target fuera de rango. Distancia: {distanceToTarget}, Rango: {range}");
+        }
+        
+        return inRange;
     }
     
+    /// <summary>
+    /// Updates the orientation of the tower model to face the target
+    /// </summary>
+    protected virtual void UpdateModelOrientation()
+{
+    if (currentTarget == null) return;
+    
+    // Calculate direction to target
+    Vector3 direction = currentTarget.transform.position - transform.position;
+    bool shouldFaceRight = direction.x > 0;
+    
+    // Only update if direction changed
+    if (shouldFaceRight != isFacingRight)
+    {
+        isFacingRight = shouldFaceRight;
+        
+        // Since sprites face LEFT by default, flip when they should face RIGHT
+        SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>();
+        foreach (SpriteRenderer renderer in renderers)
+        {
+            if (renderer.transform == transform) continue;
+            
+            // For sprites facing left by default
+            renderer.flipX = shouldFaceRight;
+            Debug.Log($"Tower {name}: Flipped sprite to flipX={renderer.flipX} (shouldFaceRight={shouldFaceRight})");
+        }
+        
+        
+    }
+}
+
     /// <summary>
     /// Attacks the current target
     /// </summary>
@@ -210,11 +304,75 @@ public abstract class Tower : MonoBehaviour, IUpgradeable
     }
     
     /// <summary>
+    /// Test method to manually check detection
+    /// </summary>
+    [ContextMenu("Test Detection")]
+    public void TestDetection()
+    {
+        Debug.Log("======= PRUEBA DE DETECCIÓN MANUAL =======");
+        Debug.Log($"Tower position: {transform.position}, Range: {range}");
+        
+        // Detectar TODOS los colliders sin filtro de capa
+        Collider2D[] allColliders = Physics2D.OverlapCircleAll(transform.position, range);
+        Debug.Log($"Total colliders detected (any layer): {allColliders.Length}");
+        
+        foreach (var col in allColliders)
+        {
+            Debug.Log($"- Collider: {col.name}, Layer: {LayerMask.LayerToName(col.gameObject.layer)}");
+        }
+        
+        // Detectar solo en capa Enemy
+        int enemyMask = LayerMask.GetMask("Enemy");
+        Debug.Log($"Enemy layer mask: {enemyMask}");
+        
+        Collider2D[] enemyColliders = Physics2D.OverlapCircleAll(transform.position, range, enemyMask);
+        Debug.Log($"Enemy colliders detected: {enemyColliders.Length}");
+        
+        // Verificar todos los GameObjects con Tag "Enemy"
+        GameObject[] enemyObjects = GameObject.FindGameObjectsWithTag("Enemy");
+        Debug.Log($"GameObjects with Enemy tag: {enemyObjects.Length}");
+        
+        foreach (var enemy in enemyObjects)
+        {
+            float distance = Vector2.Distance(transform.position, enemy.transform.position);
+            Debug.Log($"- Enemy: {enemy.name}, Distance: {distance}, Layer: {LayerMask.LayerToName(enemy.layer)}");
+        }
+        
+        Debug.Log("======= FIN DE PRUEBA =======");
+    }
+    
+    /// <summary>
+    /// Método para validar parámetros desde el Inspector
+    /// </summary>
+    public void OnValidate()
+    {
+        if (debugMode)
+        {
+            debugMode = false;
+            TestDetection();
+        }
+    }
+    
+    /// <summary>
     /// Visualizes the tower's range in the editor
     /// </summary>
     protected virtual void OnDrawGizmosSelected()
     {
         Gizmos.color = new Color(1, 0, 0, 0.3f);
         Gizmos.DrawSphere(transform.position, range);
+    }
+
+    private void OnDrawGizmos()
+    {
+        // Draw the range of the tower
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, range);
+        
+        // If there is a current target, draw a line to it
+        if (currentTarget != null)
+        {
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(transform.position, currentTarget.transform.position);
+        }
     }
 }

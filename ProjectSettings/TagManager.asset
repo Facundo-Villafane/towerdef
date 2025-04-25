@@ -3,7 +3,8 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Enemy
   layers:
   - Default
   - TransparentFX
@@ -11,10 +12,10 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
+  - Ground
   - Path
-  - Tower
+  - Enemy
+  - Towers
   - 
   - 
   - 
@@ -40,4 +41,22 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Background
+    uniqueID: 2097557135
+    locked: 0
+  - name: Ground
+    uniqueID: 1554710713
+    locked: 0
+  - name: Path
+    uniqueID: 1983863873
+    locked: 0
+  - name: Enemy
+    uniqueID: 1168037855
+    locked: 0
+  - name: Towers
+    uniqueID: 2980687877
+    locked: 0
+  - name: UI
+    uniqueID: 3277751981
     locked: 0

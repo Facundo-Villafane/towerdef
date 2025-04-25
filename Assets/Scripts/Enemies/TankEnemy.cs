@@ -7,7 +7,7 @@ using UnityEngine;
 /// </summary>
 public class TankEnemy : Enemy
 {
-    [SerializeField] private float armor = 0.3f; // Damage reduction (0-1)
+    [SerializeField] private float armor = 0.0f; // Damage reduction (0-1)
     [SerializeField] private GameObject armorVisual;
     
     protected override void Awake()
@@ -15,10 +15,10 @@ public class TankEnemy : Enemy
         base.Awake();
         
         // Set specific properties for tank enemy
-        enemyName = "Heavy Tank";
-        maxHealth = 200f;
-        moveSpeed = 1.2f;
-        goldReward = 25;
+        //enemyName = "Heavy Tank";
+        //maxHealth = 200f;
+        //moveSpeed = 1.2f;
+        //goldReward = 25;
     }
     
     public override float TakeDamage(float amount)

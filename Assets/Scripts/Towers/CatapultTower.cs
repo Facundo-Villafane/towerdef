@@ -10,21 +10,16 @@ public class CatapultTower : Tower
     [Header("Catapult Tower Properties")]
     [SerializeField] private GameObject rockPrefab;
     [SerializeField] private Transform shootPoint;
-    [SerializeField] private float projectileSpeed = 6f;
+    [SerializeField] private float projectileSpeed = 10f; // Speed of the rock projectile
     [SerializeField] private float splashRadius = 2.5f;
     [SerializeField] private Animator catapultAnimator;
-    [SerializeField] private float launchHeight = 3f; // Height of projectile arc
     
+    [Header("Advanced Settings")]
+    [SerializeField] private bool useAnimation = false; // Toggle animation usage
+    [SerializeField] private string animationTriggerName = "Launch"; // Animation trigger name
     protected override void Start()
     {
         base.Start();
-        towerName = "Catapult Tower";
-        
-        // Set default properties for catapult tower
-        range = 7f;
-        attackSpeed = 0.6f;
-        damage = 35f;
-        cost = 200;
     }
     
     /// <summary>
@@ -34,10 +29,10 @@ public class CatapultTower : Tower
     {
         if (currentTarget == null) return;
         
-        // Play attack animation
-        if (catapultAnimator != null)
+        // Play attack animation if enabled
+        if (useAnimation && catapultAnimator != null)
         {
-            catapultAnimator.SetTrigger("Launch");
+            catapultAnimator.SetTrigger(animationTriggerName);
         }
         
         // Launch rock projectile
@@ -49,7 +44,23 @@ public class CatapultTower : Tower
     /// </summary>
     private void LaunchRock()
     {
-        if (rockPrefab == null || shootPoint == null || currentTarget == null) return;
+        if (rockPrefab == null)
+        {
+            Debug.LogError("Rock prefab not assigned!");
+            return;
+        }
+        
+        if (shootPoint == null)
+        {
+            Debug.LogError("Shoot point not assigned!");
+            return;
+        }
+        
+        if (currentTarget == null)
+        {
+            Debug.LogError("No target to shoot at!");
+            return;
+        }
         
         // Create projectile
         GameObject rockObj = Instantiate(rockPrefab, shootPoint.position, Quaternion.identity);
@@ -57,39 +68,15 @@ public class CatapultTower : Tower
         
         if (rock != null)
         {
-            // Calculate where the target will be when the rock lands
-            Vector3 targetPosition = PredictTargetPosition();
-            
-            // Initialize rock with target position, damage and splash parameters
-            rock.Initialize(targetPosition, damage, projectileSpeed, splashRadius, launchHeight);
+            // Initialize rock with target enemy, damage and splash radius
+            rock.Initialize(currentTarget, damage, projectileSpeed, splashRadius);
+            Debug.Log($"Rock launched with speed: {projectileSpeed}");
         }
         else
         {
-            // If rock component not found, destroy the object
+            Debug.LogError("Rock component not found on prefab!");
             Destroy(rockObj);
         }
-    }
-    
-    /// <summary>
-    /// Predicts where the target will be when the projectile lands
-    /// </summary>
-    private Vector3 PredictTargetPosition()
-    {
-        // Basic prediction - could be improved with actual path prediction
-        Vector3 targetPosition = currentTarget.transform.position;
-        
-        // Calculate time for projectile to reach target
-        float distance = Vector3.Distance(transform.position, targetPosition);
-        float timeToTarget = distance / projectileSpeed;
-        
-        // Predict target's future position based on current velocity
-        Rigidbody2D targetRb = currentTarget.GetComponent<Rigidbody2D>();
-        if (targetRb != null)
-        {
-            targetPosition += (Vector3)targetRb.velocity * timeToTarget;
-        }
-        
-        return targetPosition;
     }
     
     /// <summary>
@@ -103,7 +90,7 @@ public class CatapultTower : Tower
         {
             // Catapult-specific upgrades
             splashRadius *= 1.2f; // Bigger splash area with upgrades
-            launchHeight *= 1.1f; // Higher projectile arc with upgrades
+            projectileSpeed *= 1.1f; // Faster projectiles with upgrades
             
             // Visual upgrade (changing sprite or model could be done here)
         }

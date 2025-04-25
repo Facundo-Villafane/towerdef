@@ -16,13 +16,13 @@ public class ArcherTower : Tower
     protected override void Start()
     {
         base.Start();
-        towerName = "Archer Tower";
+        //towerName = "Archer Tower";
         
         // Set default properties for archer tower
-        range = 6f;
-        attackSpeed = 1.5f;
-        damage = 15f;
-        cost = 100;
+        //range = 1f;
+        //attackSpeed = 1.5f;
+        //damage = 15f;
+        //cost = 100;
     }
     
     /// <summary>
@@ -47,20 +47,47 @@ public class ArcherTower : Tower
     /// </summary>
     private void ShootArrow()
     {
-        if (arrowPrefab == null || shootPoint == null || currentTarget == null) return;
+        if (arrowPrefab == null)
+        {
+            Debug.LogError($"{name}: Arrow prefab is null!");
+            return;
+        }
+        
+        if (shootPoint == null)
+        {
+            Debug.LogError($"{name}: Shoot point is null!");
+            return;
+        }
+        
+        if (currentTarget == null)
+        {
+            Debug.LogError($"{name}: Current target is null!");
+            return;
+        }
+        
         
         // Create arrow
         GameObject arrowObj = Instantiate(arrowPrefab, shootPoint.position, Quaternion.identity);
+        Debug.Log($"Arrow created at {shootPoint.position} targeting {currentTarget.name}");
+
+        // Get the SpriteRenderer component
+        SpriteRenderer arrowRenderer = arrowObj.GetComponent<SpriteRenderer>();
+        if (arrowRenderer != null)
+        {
+            Debug.Log($"Arrow sprite renderer: Color={arrowRenderer.color}, SortingLayer={arrowRenderer.sortingLayerName}, OrderInLayer={arrowRenderer.sortingOrder}");
+        }
+
         Arrow arrow = arrowObj.GetComponent<Arrow>();
         
         if (arrow != null)
         {
             // Initialize arrow with target and damage
             arrow.Initialize(currentTarget, damage, arrowSpeed);
+            Debug.Log("Arrow component initialized successfully");
         }
         else
         {
-            // If arrow component not found, destroy the object
+            Debug.LogError("Arrow component not found on prefab!");
             Destroy(arrowObj);
         }
     }
