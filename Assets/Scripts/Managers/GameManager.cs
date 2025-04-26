@@ -11,7 +11,7 @@ public class GameManager : Singleton<GameManager>
     [Header("Game Settings")]
     [SerializeField] private int startingLives = 20;
     [SerializeField] private int startingGold = 200;
-    
+
     // Game state
     private int lives;
     private int gold;
@@ -19,19 +19,19 @@ public class GameManager : Singleton<GameManager>
     private GameState currentState = GameState.MainMenu;
     private int currentLevel = 1;
     private bool[] levelsUnlocked = new bool[3] { true, false, false };
-    
+
     // Properties
     public int Lives => lives;
     public int Gold => gold;
     public int Score => score;
     public GameState CurrentState => currentState;
-    
+
     // Events
     public System.Action<int> OnLivesChanged;
     public System.Action<int> OnGoldChanged;
     public System.Action<int> OnScoreChanged;
     public System.Action<GameState> OnGameStateChanged;
-    
+
     /// <summary>
     /// Game state enum
     /// </summary>
@@ -43,22 +43,20 @@ public class GameManager : Singleton<GameManager>
         Victory,
         Defeat
     }
-    
+
     protected override void OnAwake()
     {
-        // Initialize game
         ResetGame();
     }
-    
+
     private void Start()
     {
-        // Check current scene
-        if (SceneManager.GetActiveScene().name == "Gameplay")
+        if (SceneManager.GetActiveScene().name == "Nivel1")
         {
             StartGame();
         }
     }
-    
+
     /// <summary>
     /// Resets game state to default values
     /// </summary>
@@ -67,12 +65,12 @@ public class GameManager : Singleton<GameManager>
         lives = startingLives;
         gold = startingGold;
         score = 0;
-        
+
         OnLivesChanged?.Invoke(lives);
         OnGoldChanged?.Invoke(gold);
         OnScoreChanged?.Invoke(score);
     }
-    
+
     /// <summary>
     /// Starts the game
     /// </summary>
@@ -80,33 +78,31 @@ public class GameManager : Singleton<GameManager>
     {
         ChangeState(GameState.Gameplay);
     }
-    
+
     /// <summary>
     /// Changes the game state
     /// </summary>
     public void ChangeState(GameState newState)
     {
         if (currentState == newState) return;
-        
+
         currentState = newState;
         OnGameStateChanged?.Invoke(currentState);
-        
+
         switch (currentState)
         {
             case GameState.Victory:
-                // Handle victory
                 Debug.Log("Victory!");
                 ShowVictoryScreen();
                 break;
-                
+
             case GameState.Defeat:
-                // Handle defeat
                 Debug.Log("Defeat!");
                 ShowDefeatScreen();
                 break;
         }
     }
-    
+
     /// <summary>
     /// Adds gold to the player
     /// </summary>
@@ -115,19 +111,19 @@ public class GameManager : Singleton<GameManager>
         gold += amount;
         OnGoldChanged?.Invoke(gold);
     }
-    
+
     /// <summary>
     /// Spends gold if player has enough
     /// </summary>
     public bool SpendGold(int amount)
     {
         if (gold < amount) return false;
-        
+
         gold -= amount;
         OnGoldChanged?.Invoke(gold);
         return true;
     }
-    
+
     /// <summary>
     /// Adds score points
     /// </summary>
@@ -136,7 +132,7 @@ public class GameManager : Singleton<GameManager>
         score += amount;
         OnScoreChanged?.Invoke(score);
     }
-    
+
     /// <summary>
     /// Reduces player lives
     /// </summary>
@@ -144,29 +140,21 @@ public class GameManager : Singleton<GameManager>
     {
         lives -= amount;
         OnLivesChanged?.Invoke(lives);
-        
-        // Check for game over
+
         if (lives <= 0)
         {
             ChangeState(GameState.Defeat);
         }
     }
-    
+
     /// <summary>
     /// Victory condition
     /// </summary>
     public void Victory()
     {
         ChangeState(GameState.Victory);
-        
-        // Unlock next level
-        int nextLevel = GetCurrentLevel() + 1;
-        if (nextLevel <= 3) // Right now we have 3 levels
-        {
-            UnlockLevel(nextLevel);
-        }
     }
-    
+
     /// <summary>
     /// Get current level
     /// </summary>
@@ -174,7 +162,7 @@ public class GameManager : Singleton<GameManager>
     {
         return currentLevel;
     }
-    
+
     /// <summary>
     /// Unlock a level
     /// </summary>
@@ -185,57 +173,80 @@ public class GameManager : Singleton<GameManager>
             levelsUnlocked[level - 1] = true;
         }
     }
-    
+
     /// <summary>
-    /// Show victory screen
+    /// Shows victory screen
     /// </summary>
     private void ShowVictoryScreen()
     {
-        // Show victory message
-        Debug.Log("¡Victoria!");
-        
-        // Activate victory panel if it exists
-        GameObject victoryPanel = GameObject.Find("VictoryPanel");
-        if (victoryPanel != null)
-        {
-            victoryPanel.SetActive(true);
-        }
+        ShowEndGameScreen(
+            "VictoryPanel",
+            "VictoryScene",
+            () =>
+            {
+                int finalScore = CalculateFinalScore();
+                PlayerPrefs.SetInt("FinalScore", finalScore);
+            }
+        );
     }
-    
+
     /// <summary>
-    /// Show defeat screen
+    /// Shows defeat screen
     /// </summary>
     private void ShowDefeatScreen()
     {
-        // Show defeat message
-        Debug.Log("¡Derrota!");
-        
-        // Activate defeat panel if it exists
-        GameObject defeatPanel = GameObject.Find("DefeatPanel");
-        if (defeatPanel != null)
+        ShowEndGameScreen(
+            "DefeatPanel",
+            "DefeatScene",
+            () =>
+            {
+                if (SimpleWaveManager.Instance != null)
+                {
+                    PlayerPrefs.SetInt("WaveReached", SimpleWaveManager.Instance.GetCurrentWave());
+                }
+            }
+        );
+    }
+
+    /// <summary>
+    /// Shows endgame panel or loads scene
+    /// </summary>
+    private void ShowEndGameScreen(string panelName, string sceneName, System.Action extraDataSaver)
+    {
+        extraDataSaver?.Invoke();
+
+        GameObject panel = GameObject.Find(panelName);
+        if (panel != null)
         {
-            defeatPanel.SetActive(true);
+            panel.SetActive(true);
+        }
+        else
+        {
+            StartCoroutine(LoadSceneAfterDelay(sceneName, 2f));
         }
     }
-    
+
+    /// <summary>
+    /// Loads a scene after a delay
+    /// </summary>
+    private IEnumerator LoadSceneAfterDelay(string sceneName, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        SceneManager.LoadScene(sceneName);
+    }
+
     /// <summary>
     /// Calculates final score for the level
     /// </summary>
     public int CalculateFinalScore()
     {
-        // Add bonus for remaining lives
         int lifeBonus = lives * 10;
-        
-        // Add bonus for remaining gold
         int goldBonus = gold / 10;
-        
-        // Final score
         int finalScore = score + lifeBonus + goldBonus;
-        
-        // Update score
+
         score = finalScore;
         OnScoreChanged?.Invoke(score);
-        
+
         return finalScore;
     }
 }
