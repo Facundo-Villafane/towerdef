@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 /// <summary>
@@ -114,82 +115,10 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     // Method to handle restart level button click
     public void OnRestartLevelClicked()
     {
-        // Restart the level
-        if (GameManager.Instance != null)
-        {
-            // Temporarily deactivate any listeners to avoid multiple calls
-            if (SimpleWaveManager.Instance != null)
-            {
-                SimpleWaveManager.Instance.OnWaveCompleted -= OnWaveCompletedHandler;
-                SimpleWaveManager.Instance.OnWaveStarted -= UpdateWaveDisplay;
-                
-                // Reset the waves
-                SimpleWaveManager.Instance.ResetWaves();
-            }
-            
-            StartCoroutine(CleanAndRestartLevel());
-        }
-    }
-    private IEnumerator CleanAndRestartLevel()
-    {
-                
-        // Destroy all towers in the scene 😠
-        Tower[] allTowers = FindObjectsOfType<Tower>();
-        foreach (Tower tower in allTowers)
-        {
-            Destroy(tower.gameObject);
-        }
-        
-        // Destroy all enemies in the scene 😈
-        Enemy[] allEnemies = FindObjectsOfType<Enemy>();
-        foreach (Enemy enemy in allEnemies)
-        {
-            DestroyImmediate(enemy.gameObject);
-        }
-
-        // Check if there are any remaining enemies and destroy them 😡
-        yield return new WaitForSecondsRealtime(0.1f);
-        
-        // Reset the game state 😌
-        GameManager.Instance.ResetGame();
-        
-        // Wait for a frame, again, to ensure all objects are destroyed 🤨
-        yield return null;
-        
-        // Register the event listeners again 😅
-        if (SimpleWaveManager.Instance != null)
-        {
-            SimpleWaveManager.Instance.OnWaveCompleted += OnWaveCompletedHandler;
-            SimpleWaveManager.Instance.OnWaveStarted += UpdateWaveDisplay;
-            
-            // Check if currentWave is reset to 0 
-            if (SimpleWaveManager.Instance.GetCurrentWave() != 0)
-            {
-                Debug.LogError("currentWave was not reset correctly!"); 
-                // Restar attempt to reset currentWave manually ********
-                // This is an emergency fix, should be removed later ***** 
-                var fieldInfo = typeof(SimpleWaveManager).GetField("currentWave", 
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                if (fieldInfo != null)
-                    fieldInfo.SetValue(SimpleWaveManager.Instance, 0);
-            }
-            
-            // Update the wave display to show the reset state 0/10
-            UpdateWaveDisplay(0, SimpleWaveManager.Instance.GetTotalWaves());
-            
-            // Finally, start the waves again after a short delay 🥰
-            yield return new WaitForSecondsRealtime(0.2f);
-            SimpleWaveManager.Instance.StartWaves();
-        }
+        // Simplemente recarga la escena actual
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    private void StartWavesAfterReset()
-    {
-        if (SimpleWaveManager.Instance != null)
-        {
-            SimpleWaveManager.Instance.StartWaves();
-        }
-    }
 
     // Method to handle main menu button click
     public void OnMainMenuClicked()

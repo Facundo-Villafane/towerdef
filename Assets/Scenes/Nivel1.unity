@@ -25483,7 +25483,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 2079590361}
         m_TargetAssemblyTypeName: SimpleUIManager, Assembly-CSharp
-        m_MethodName: OnPreviousWaveClicked
+        m_MethodName: OnRestartWaveClicked
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -26095,9 +26095,9 @@ MonoBehaviour:
   playPauseButton: {fileID: 1954317190}
   playSprite: {fileID: 21300000, guid: 5af544df1c5b10d4eb533569f185a2e7, type: 3}
   pauseSprite: {fileID: 21300000, guid: 01f1eb7827744334fad42efde83d4bd4, type: 3}
-  previousWaveButton: {fileID: 0}
-  restartLevelButton: {fileID: 0}
-  mainMenuButton: {fileID: 0}
+  restartWaveButton: {fileID: 1639787441}
+  restartLevelButton: {fileID: 137804719}
+  mainMenuButton: {fileID: 595137780}
   nextWaveTimerPanel: {fileID: 1098295674}
   fadeInDuration: 0.5
   fadeOutDuration: 0.5

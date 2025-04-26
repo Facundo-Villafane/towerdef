@@ -42,7 +42,7 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
     
     private void Update()
     {
-        if (!wavesActive) return;
+        if (!wavesActive || !WavesStarted) return;
         
         // Handle wave timer
         if (enemiesRemainingInWave <= 0)
@@ -96,24 +96,6 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         }
     }
 
-    /// <summary>
-    /// Go back to the previous wave
-    /// </summary>
-    public void PreviousWave()
-    {
-        // It only allows going back if we are not on the first wave
-        if (currentWave > 1)
-        {
-            // Stop coroutines and clean up enemies
-            CleanupCurrentWave();
-            
-            // Go back to the previous wave
-            currentWave -= 2;
-            
-            // Start the next wave
-            StartNextWave();
-        }
-    }
 
     /// <summary>
     /// Reset all waves to the initial state
