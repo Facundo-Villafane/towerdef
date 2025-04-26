@@ -39,16 +39,6 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         }
     }
     
-    // For debugging purposes only!!
-    private void Start()
-    {
-        List<Vector2> path = FindObjectOfType<LevelManager>().GetPath();
-        Debug.Log($"Path points: {path.Count}");
-        foreach (var point in path)
-        {
-            Debug.Log($"Path point: {point}");
-        }
-    }
     
     private void Update()
     {
@@ -130,11 +120,18 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
     /// </summary>
     public void ResetWaves()
     {
-        // Stop all coroutines and clean up current wave
+        Debug.Log("ResetWaves: Resetting all wave state");
+        
+        // Stop all coroutines first
+        StopAllCoroutines();
+        
+        // Cleanup current wave
         CleanupCurrentWave();
         
-        // Restart current wave
+        // Reset ALL variables
         currentWave = 0;
+        Debug.Log($"ResetWaves: currentWave reset to {currentWave}");
+        
         enemiesRemainingInWave = 0;
         wavesActive = false;
         waveTimer = 0f;
@@ -198,9 +195,6 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
             yield break;
         }
         
-        Debug.Log($"Spawning {count} enemies on path with {path.Count} points");
-        Debug.Log($"First path point: {path[0]}, Last path point: {path[path.Count - 1]}");
-        
         // Health and speed increase with wave number
         float healthMultiplier = 1f + (currentWave - 1) * 0.1f;
         float speedMultiplier = 1f + (currentWave - 1) * 0.05f;
@@ -215,7 +209,6 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
                 // Spawn enemy
                 Vector3 spawnPosition = new Vector3(path[0].x, path[0].y, -1f);
                 GameObject enemyObj = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity, enemyParent);
-                Debug.Log($"Enemy spawned at {path[0]}");
                 
                 Enemy enemy = enemyObj.GetComponent<Enemy>();
                 
@@ -228,17 +221,7 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
                     // Subscribe to events
                     enemy.OnEnemyDeath += OnEnemyDefeated;
                     enemy.OnEnemyReachedEnd += OnEnemyReachedEnd;
-                    
-                    Debug.Log($"Enemy initialized with health multiplier {healthMultiplier} and speed multiplier {speedMultiplier}");
                 }
-                else
-                {
-                    Debug.LogError("Enemy component not found on prefab!");
-                }
-            }
-            else
-            {
-                Debug.LogError("No enemy prefab selected!");
             }
             
             // Wait before spawning next enemy
@@ -266,12 +249,10 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         {
             // Select from stronger enemies
             int index = Random.Range(1, enemyPrefabs.Length);
-            Debug.Log($"Selected stronger enemy type index: {index}");
             return enemyPrefabs[index];
         }
         
         // Default to basic enemy
-        Debug.Log("Selected basic enemy type");
         return enemyPrefabs[0];
     }
     
@@ -287,7 +268,6 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         
         // Update counter
         enemiesRemainingInWave--;
-        Debug.Log($"Enemy defeated. Remaining: {enemiesRemainingInWave}");
         CheckWaveComplete();
     }
     

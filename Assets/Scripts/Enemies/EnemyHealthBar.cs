@@ -33,7 +33,6 @@ public class EnemyHealthBar : MonoBehaviour
     {
         if (enemyReference == null)
         {
-            Debug.LogError("EnemyHealthBar: Could not find Enemy component in parent!");
             return;
         }
         
@@ -71,7 +70,7 @@ public class EnemyHealthBar : MonoBehaviour
             healthFillImage.fillAmount = healthPercent;
             
             // Log for debugging
-            Debug.Log($"Health bar updated: {currentHealth}/{maxHealth} = {healthPercent:F2}, Fill: {healthFillImage.fillAmount:F2}");
+            //Debug.Log($"Health bar updated: {currentHealth}/{maxHealth} = {healthPercent:F2}, Fill: {healthFillImage.fillAmount:F2}");
         }
     }
     
@@ -82,20 +81,5 @@ public class EnemyHealthBar : MonoBehaviour
         {
             canvas.transform.forward = Camera.main.transform.forward;
         }
-    }
-    
-    // For testing in the editor
-    [ContextMenu("Test Health Bar 50%")]
-    private void TestHalfHealth()
-    {
-        if (healthFillImage != null)
-            healthFillImage.fillAmount = 0.5f;
-    }
-    
-    [ContextMenu("Test Health Bar 80%")]
-    private void TestMostHealth()
-    {
-        if (healthFillImage != null)
-            healthFillImage.fillAmount = 0.8f;
     }
 }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Simplified UI manager for the tower defense game
@@ -15,7 +14,7 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     [SerializeField] private TextMeshProUGUI livesText;
     [SerializeField] private TextMeshProUGUI waveText;
     [SerializeField] private TextMeshProUGUI nextWaveTimerText; 
-    [SerializeField] private Button skipWaveButton; 
+    [SerializeField] private Button skipWaveButton; // Button for skip waves
     [SerializeField] private Sprite enabledSkipSprite;
     [SerializeField] private Sprite disabledSkipSprite;
     [SerializeField] private Button playPauseButton;
@@ -24,10 +23,9 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     private bool gameIsPaused = false;
 
     [Header("Additional Controls")]
-    [SerializeField] private Button previousWaveButton; // Button to go to the previous wave
-    [SerializeField] private Button restartWaveButton; // Button to restart the current wave
-    [SerializeField] private Button restartLevelButton; // Button to restart the level
-    [SerializeField] private Button mainMenuButton; // Button to go to the main menu
+    [SerializeField] private Button restartWaveButton;
+    [SerializeField] private Button restartLevelButton;
+    [SerializeField] private Button mainMenuButton;
 
     [Header("Notification Elements")]
     [SerializeField] private CanvasGroup nextWaveTimerPanel;
@@ -91,29 +89,20 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
             }
         }
         // Start the game automatically after a short delay
+        // **This is just for testing purposes, will remove in production**
         Invoke("StartWavesAutomatically", 1.0f);
 
-        // Setup all control buttons
-        if (previousWaveButton != null)
-            previousWaveButton.onClick.AddListener(OnPreviousWaveClicked);
-            
+        // To sed Other buttons
         if (restartWaveButton != null)
-            restartWaveButton.onClick.AddListener(OnRestartWaveClicked);
+        restartWaveButton.onClick.AddListener(OnRestartWaveClicked);
             
         if (restartLevelButton != null)
             restartLevelButton.onClick.AddListener(OnRestartLevelClicked);
             
         if (mainMenuButton != null)
             mainMenuButton.onClick.AddListener(OnMainMenuClicked);
-            
-        if (skipWaveButton != null)
-            skipWaveButton.onClick.AddListener(OnSkipWaveClicked);
-            
-        if (playPauseButton != null)
-            playPauseButton.onClick.AddListener(OnPlayPauseButtonClicked);
     }
 
-    // Method to handle restart wave button click
     public void OnRestartWaveClicked()
     {
         if (SimpleWaveManager.Instance != null)
@@ -122,44 +111,81 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
         }
     }
 
-    // Method to handle previous wave button click
-    public void OnPreviousWaveClicked()
-    {
-        if (SimpleWaveManager.Instance != null)
-        {
-            SimpleWaveManager.Instance.PreviousWave();
-        }
-    }
-
     // Method to handle restart level button click
     public void OnRestartLevelClicked()
     {
-        // Restart actual level
+        // Restart the level
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.ResetGame();
-            
-            // Delete all towers in the scene
-            Tower[] allTowers = FindObjectsOfType<Tower>();
-            foreach (Tower tower in allTowers)
-            {
-                Destroy(tower.gameObject);
-            }
-            
-            // Restart the waves too
+            // Temporarily deactivate any listeners to avoid multiple calls
             if (SimpleWaveManager.Instance != null)
             {
-                SimpleWaveManager.Instance.ResetWaves();
+                SimpleWaveManager.Instance.OnWaveCompleted -= OnWaveCompletedHandler;
+                SimpleWaveManager.Instance.OnWaveStarted -= UpdateWaveDisplay;
                 
-                // Start the waves after a short delay
-                Invoke("StartWavesAfterReset", 1.0f);
+                // Reset the waves
+                SimpleWaveManager.Instance.ResetWaves();
             }
+            
+            StartCoroutine(CleanAndRestartLevel());
+        }
+    }
+    private IEnumerator CleanAndRestartLevel()
+    {
+                
+        // Destroy all towers in the scene 😠
+        Tower[] allTowers = FindObjectsOfType<Tower>();
+        foreach (Tower tower in allTowers)
+        {
+            Destroy(tower.gameObject);
+        }
+        
+        // Destroy all enemies in the scene 😈
+        Enemy[] allEnemies = FindObjectsOfType<Enemy>();
+        foreach (Enemy enemy in allEnemies)
+        {
+            DestroyImmediate(enemy.gameObject);
+        }
+
+        // Check if there are any remaining enemies and destroy them 😡
+        yield return new WaitForSecondsRealtime(0.1f);
+        
+        // Reset the game state 😌
+        GameManager.Instance.ResetGame();
+        
+        // Wait for a frame, again, to ensure all objects are destroyed 🤨
+        yield return null;
+        
+        // Register the event listeners again 😅
+        if (SimpleWaveManager.Instance != null)
+        {
+            SimpleWaveManager.Instance.OnWaveCompleted += OnWaveCompletedHandler;
+            SimpleWaveManager.Instance.OnWaveStarted += UpdateWaveDisplay;
+            
+            // Check if currentWave is reset to 0 
+            if (SimpleWaveManager.Instance.GetCurrentWave() != 0)
+            {
+                Debug.LogError("currentWave was not reset correctly!"); 
+                // Restar attempt to reset currentWave manually ********
+                // This is an emergency fix, should be removed later ***** 
+                var fieldInfo = typeof(SimpleWaveManager).GetField("currentWave", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (fieldInfo != null)
+                    fieldInfo.SetValue(SimpleWaveManager.Instance, 0);
+            }
+            
+            // Update the wave display to show the reset state 0/10
+            UpdateWaveDisplay(0, SimpleWaveManager.Instance.GetTotalWaves());
+            
+            // Finally, start the waves again after a short delay 🥰
+            yield return new WaitForSecondsRealtime(0.2f);
+            SimpleWaveManager.Instance.StartWaves();
         }
     }
 
     private void StartWavesAfterReset()
     {
-        if (SimpleWaveManager.Instance != null && GameManager.Instance.CurrentState == GameManager.GameState.Gameplay)
+        if (SimpleWaveManager.Instance != null)
         {
             SimpleWaveManager.Instance.StartWaves();
         }
@@ -168,44 +194,23 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     // Method to handle main menu button click
     public void OnMainMenuClicked()
     {
-        // Load the main menu scene
-        // Reset the game state and player data if necessary ****
-        SceneManager.LoadScene("MainMenu");
+        // Cargar la escena del menú principal
+        //SceneManager.LoadScene("MainMenu");
     }
 
     // Clean up event listeners!!!!!
     private void OnDestroy()
     {
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.OnGoldChanged -= UpdateGoldDisplay;
-            GameManager.Instance.OnLivesChanged -= UpdateLivesDisplay;
-        }
-        
-        if (SimpleWaveManager.Instance != null)
-        {
-            SimpleWaveManager.Instance.OnWaveStarted -= UpdateWaveDisplay;
-            SimpleWaveManager.Instance.OnWaveCompleted -= OnWaveCompletedHandler;
-            SimpleWaveManager.Instance.OnAllWavesCompleted -= OnAllWavesCompletedHandler;
-        }
-        
-        if (previousWaveButton != null)
-            previousWaveButton.onClick.RemoveListener(OnPreviousWaveClicked);
-            
         if (restartWaveButton != null)
-            restartWaveButton.onClick.RemoveListener(OnRestartWaveClicked);
-            
+        restartWaveButton.onClick.RemoveListener(OnRestartWaveClicked); 
+
         if (restartLevelButton != null)
             restartLevelButton.onClick.RemoveListener(OnRestartLevelClicked);
             
         if (mainMenuButton != null)
             mainMenuButton.onClick.RemoveListener(OnMainMenuClicked);
             
-        if (skipWaveButton != null)
-            skipWaveButton.onClick.RemoveListener(OnSkipWaveClicked);
-            
-        if (playPauseButton != null)
-            playPauseButton.onClick.RemoveListener(OnPlayPauseButtonClicked);
+        // Clean up other listeners!!!!!
     }
 
     // Method to handle Start waves automatically
@@ -220,31 +225,22 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
 
     public void OnPlayPauseButtonClicked()
     {
-        Debug.Log("Play/Pause button clicked!");
-        
         gameIsPaused = !gameIsPaused;
-        Debug.Log($"Game is now {(gameIsPaused ? "paused" : "unpaused")}");
         
         // Refresh button sprite
         Image buttonImage = playPauseButton.GetComponent<Image>();
         if (buttonImage != null)
         {
             buttonImage.sprite = gameIsPaused ? playSprite : pauseSprite;
-            Debug.Log("Button sprite updated");
-        }
-        else
-        {
-            Debug.LogError("No Image component found on playPauseButton!");
         }
         
         // Play or pause the game
         Time.timeScale = gameIsPaused ? 0f : 1f;
-        Debug.Log($"Time.timeScale set to {Time.timeScale}");
+        
         
         if (!gameIsPaused && SimpleWaveManager.Instance != null && !SimpleWaveManager.Instance.WavesStarted)
         {
             SimpleWaveManager.Instance.StartWaves();
-            Debug.Log("Waves started");
         }
     }
     
@@ -255,6 +251,12 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     {
         // Update the wave display
         UpdateWaveDisplay(currentWave, totalWaves);
+        
+        // Add rewards or show message
+        //Debug.Log($"Wave {currentWave} completed! {totalWaves - currentWave} waves remaining.");
+        
+        // Give bonus gold between waves
+        //GameManager.Instance.AddGold(50);
     }
 
     private void Update()
@@ -317,10 +319,13 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
             return;
         }
 
+        // Verificación para depuración
+        Debug.Log($"Showing next wave panel. Current alpha: {nextWaveTimerPanel.alpha}, Active: {nextWaveTimerPanel.gameObject.activeSelf}");
+
         if (fadeCoroutine != null)
             StopCoroutine(fadeCoroutine);
                 
-        // Check if the onbject is active before showing it
+        // Asegurarse de que el objeto esté activo antes de la animación
         nextWaveTimerPanel.gameObject.SetActive(true);
         
         fadeCoroutine = StartCoroutine(FadeCanvasGroup(nextWaveTimerPanel, 0f, 1f, fadeInDuration));
@@ -334,6 +339,9 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
             Debug.LogError("nextWaveTimerPanel is null!");
             return;
         }
+
+        // Verificación para depuración
+        Debug.Log($"Hiding next wave panel. Current alpha: {nextWaveTimerPanel.alpha}, Active: {nextWaveTimerPanel.gameObject.activeSelf}");
         
         if (fadeCoroutine != null)
             StopCoroutine(fadeCoroutine);
@@ -350,10 +358,13 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
             yield break;
         }
         
-        // Check if the canvas group is already active
+        // Verificación para depuración
+        Debug.Log($"Starting fade from {startAlpha} to {endAlpha} over {duration} seconds");
+        
+        // Asegurarse de que el objeto esté activo antes de la animación
         canvasGroup.gameObject.SetActive(true);
         
-        // Set initial alpha
+        // Establecer el alpha inicial
         canvasGroup.alpha = startAlpha;
         
         float startTime = Time.unscaledTime;
@@ -366,17 +377,25 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
             
             canvasGroup.alpha = Mathf.Lerp(startAlpha, endAlpha, normalizedTime);
             
+            // Depuración ocasional
+            if (elapsedTime % 0.5f < 0.02f)
+            {
+                Debug.Log($"Fade progress: {normalizedTime:F2}, Current alpha: {canvasGroup.alpha:F2}");
+            }
+            
             yield return null;
         }
         
-        // Check if the coroutine was stopped before completion
+        // Asegurar que termine con el valor correcto
         canvasGroup.alpha = endAlpha;
         
-        // If we are hiding the panel and the alpha is very low, deactivate the game object
+        // Si estamos ocultando, desactivar el objeto para ahorrar recursos
         if (endAlpha <= 0.01f)
         {
             canvasGroup.gameObject.SetActive(false);
         }
+        
+        Debug.Log($"Fade completed: {startAlpha} -> {endAlpha}, Panel active: {canvasGroup.gameObject.activeSelf}");
     }
     
     /// <summary>
@@ -488,6 +507,34 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
         }
     }
     
+    #region Button Handlers
+    
+    /// <summary>
+    /// Handles start game button click
+    /// </summary>
+    public void OnStartGameClicked()
+    {
+        // Reset and start the game
+        GameManager.Instance.ResetGame();
+        GameManager.Instance.StartGame();
+    }
+    
+    /// <summary>
+    /// Handles speed up button click
+    /// </summary>
+    public void OnSpeedUpClicked()
+    {
+        // Toggle game speed
+        if (Time.timeScale == 1f)
+        {
+            Time.timeScale = 2f;
+        }
+        else
+        {
+            Time.timeScale = 1f;
+        }
+    }
+    
     /// <summary>
     /// Handles skip wave button click
     /// </summary>
@@ -499,11 +546,16 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
         }
     }
     
+    #endregion
+    
     /// <summary>
     /// Shows the victory panel
     /// </summary>
     public void ShowVictoryPanel()
     {
+        // Implement victory panel logic
+        Debug.Log("Showing victory panel");
+        
         // Find and activate victory panel
         Transform victoryPanel = transform.Find("VictoryPanel");
         if (victoryPanel != null)
@@ -517,6 +569,9 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     /// </summary>
     public void ShowDefeatPanel()
     {
+        // Implement defeat panel logic
+        Debug.Log("Showing defeat panel");
+        
         // Find and activate defeat panel
         Transform defeatPanel = transform.Find("DefeatPanel");
         if (defeatPanel != null)
