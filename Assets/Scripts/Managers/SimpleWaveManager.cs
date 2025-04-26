@@ -83,6 +83,82 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         WavesStarted = true; 
         StartNextWave();
     }
+
+    /// <summary>
+    /// Restart the current wave
+    /// </summary>
+    public void RestartCurrentWave()
+    {
+    
+        CleanupCurrentWave();
+        
+        // If we are in a valid wave, just restart it
+        if (currentWave > 0 && currentWave <= totalWaves)
+        {
+            
+            currentWave--;
+            StartNextWave();
+        }
+        else if (currentWave == 0)
+        {
+            // If we are at the beginning, just start the first wave
+            StartNextWave();
+        }
+    }
+
+    /// <summary>
+    /// Go back to the previous wave
+    /// </summary>
+    public void PreviousWave()
+    {
+        // It only allows going back if we are not on the first wave
+        if (currentWave > 1)
+        {
+            // Stop coroutines and clean up enemies
+            CleanupCurrentWave();
+            
+            // Go back to the previous wave
+            currentWave -= 2;
+            
+            // Start the next wave
+            StartNextWave();
+        }
+    }
+
+    /// <summary>
+    /// Reset all waves to the initial state
+    /// </summary>
+    public void ResetWaves()
+    {
+        // Stop all coroutines and clean up current wave
+        CleanupCurrentWave();
+        
+        // Restart current wave
+        currentWave = 0;
+        enemiesRemainingInWave = 0;
+        wavesActive = false;
+        waveTimer = 0f;
+        WavesStarted = false;
+    }
+    
+    /// <summary>
+    /// Clean up the current wave by destroying all active enemies and stopping coroutines
+    /// </summary>
+    private void CleanupCurrentWave()
+    {
+        // Destroy all active enemies
+        GameObject[] activeEnemies = GameObject.FindGameObjectsWithTag("Enemy");
+        foreach (GameObject enemy in activeEnemies)
+        {
+            Destroy(enemy);
+        }
+        
+        // Stop all coroutines to prevent spawning new enemies
+        StopAllCoroutines();
+        
+        // Reset enemies count
+        enemiesRemainingInWave = 0;
+    }
     
     /// <summary>
     /// Starts the next wave of enemies

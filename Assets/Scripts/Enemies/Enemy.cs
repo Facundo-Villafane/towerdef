@@ -108,6 +108,9 @@ public abstract class Enemy : MonoBehaviour, IDamageable
         float actualDamage = Mathf.Min(currentHealth, amount);
         currentHealth -= actualDamage;
         
+        // Call the damage taken event
+        ShowDamageEffect(); 
+        
         // Notify subscribers about health change
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
         
@@ -144,12 +147,32 @@ public abstract class Enemy : MonoBehaviour, IDamageable
         
         isAlive = false;
         
+        // Desactivar la barra de vida inmediatamente
+        Transform healthBar = transform.Find("Healthbar");
+        if (healthBar != null)
+        {
+            healthBar.gameObject.SetActive(false);
+        }
+        
+        // Activar animación de muerte
+        Animator animator = GetComponent<Animator>();
+        if (animator != null)
+        {
+            animator.SetTrigger("Die");
+            
+            // Esperar a que termine la animación antes de destruir
+            Destroy(gameObject, 1.0f);
+        }
+        else
+        {
+            // Si no hay animator, destruir inmediatamente
+            Destroy(gameObject, 0.5f);
+        }
+        
         if (killedByPlayer)
         {
             OnEnemyDeath?.Invoke(this);
         }
-        
-        Destroy(gameObject, 0.5f);
     }
     
     public virtual void Initialize(float healthMultiplier, float speedMultiplier)

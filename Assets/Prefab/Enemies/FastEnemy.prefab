@@ -191,6 +191,7 @@ MonoBehaviour:
   damageToPlayer: 1
   trailEffect: {fileID: 0}
   dodgeChance: 0.2
+  dodgeTextPrefab: {fileID: 3905193935477982932, guid: 693a9bffe1d0e4b42823d620e9b0da7a, type: 3}
 --- !u!1 &2962492424781776653
 GameObject:
   m_ObjectHideFlags: 0
@@ -280,7 +281,7 @@ GameObject:
   - component: {fileID: 2361284635460538924}
   - component: {fileID: 5425636711281094389}
   m_Layer: 5
-  m_Name: HealthBar
+  m_Name: Healthbar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
