@@ -13,7 +13,9 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     [SerializeField] protected int goldReward = 10;
     [SerializeField] protected int damageToPlayer = 1;
     
+    public System.Action OnDamageTaken;
     protected float currentHealth;
+    public System.Action<float, float> OnHealthChanged; // Parameters: currentHealth, maxHealth
     protected bool isAlive = true;
     protected List<Vector2> pathPoints = new List<Vector2>();
     protected int currentPathIndex = 0;
@@ -106,12 +108,34 @@ public abstract class Enemy : MonoBehaviour, IDamageable
         float actualDamage = Mathf.Min(currentHealth, amount);
         currentHealth -= actualDamage;
         
+        // Notify subscribers about health change
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+        
         if (currentHealth <= 0)
         {
             Die(true);
         }
         
         return actualDamage;
+    }
+
+    // Visual effect when taking damage
+    protected virtual void ShowDamageEffect()
+    {
+        // Red flash effect
+        StartCoroutine(FlashRed());
+    }
+
+    protected virtual IEnumerator FlashRed()
+    {
+        SpriteRenderer renderer = GetComponent<SpriteRenderer>();
+        if (renderer != null)
+        {
+            Color originalColor = renderer.color;
+            renderer.color = Color.red;
+            yield return new WaitForSeconds(0.1f);
+            renderer.color = originalColor;
+        }
     }
     
     protected virtual void Die(bool killedByPlayer)
@@ -133,5 +157,8 @@ public abstract class Enemy : MonoBehaviour, IDamageable
         maxHealth *= healthMultiplier;
         currentHealth = maxHealth;
         moveSpeed *= speedMultiplier;
+        
+        // Notify about initial health
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
 }

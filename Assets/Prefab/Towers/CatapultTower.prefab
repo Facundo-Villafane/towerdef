@@ -140,7 +140,7 @@ MonoBehaviour:
   towerName: 
   range: 2.2
   attackSpeed: 1
-  damage: 25
+  damage: 18
   cost: 200
   upgradeLevel: 1
   maxUpgradeLevel: 3

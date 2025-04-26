@@ -13,6 +13,22 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     [SerializeField] private TextMeshProUGUI goldText;
     [SerializeField] private TextMeshProUGUI livesText;
     [SerializeField] private TextMeshProUGUI waveText;
+    [SerializeField] private TextMeshProUGUI nextWaveTimerText; 
+    [SerializeField] private Button skipWaveButton; // Button for skip waves
+    [SerializeField] private Sprite enabledSkipSprite;
+    [SerializeField] private Sprite disabledSkipSprite;
+    [SerializeField] private Button playPauseButton;
+    [SerializeField] private Sprite playSprite;
+    [SerializeField] private Sprite pauseSprite;
+    private bool gameIsPaused = false;
+
+    [Header("Notification Elements")]
+    [SerializeField] private CanvasGroup nextWaveTimerPanel;
+    [SerializeField] private float fadeInDuration = 0.5f;
+    [SerializeField] private float fadeOutDuration = 0.5f;
+
+    private Coroutine fadeCoroutine;
+    private bool isNextWavePanelVisible = false;
     
     [Header("Tower Selection")]
     [SerializeField] private Transform towerCardsContainer;
@@ -45,17 +61,61 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
         UpdateGoldDisplay(GameManager.Instance.Gold);
         UpdateLivesDisplay(GameManager.Instance.Lives);
         UpdateWaveDisplay(0, SimpleWaveManager.Instance.GetTotalWaves());
+
+        // Hidde the next wave timer panel at start
+        if (nextWaveTimerPanel != null)
+        {
+            nextWaveTimerPanel.alpha = 0f;
+            nextWaveTimerPanel.gameObject.SetActive(false);
+            isNextWavePanelVisible = false;
+        }
         
         // Create tower cards
         CreateTowerCards();
+
+        // Initialize play/pause button
+        if (playPauseButton != null)
+        {
+            Image buttonImage = playPauseButton.GetComponent<Image>();
+            if (buttonImage != null && pauseSprite != null)
+            {
+                // Initialize with pause sprite cuz the game starts not paused
+                buttonImage.sprite = pauseSprite;
+            }
+        }
+        // Start the game automatically after a short delay
+        // **This is just for testing purposes, will remove in production**
+        Invoke("StartWavesAutomatically", 1.0f);
     }
 
-    public void StartWaves()
+    // Método nuevo para iniciar las oleadas automáticamente
+    private void StartWavesAutomatically()
     {
-        if (SimpleWaveManager.Instance != null)
+        if (SimpleWaveManager.Instance != null && !SimpleWaveManager.Instance.WavesStarted)
         {
             SimpleWaveManager.Instance.StartWaves();
-            Debug.Log("Waves started!");
+            Debug.Log("Waves started automatically");
+        }
+    }
+
+    public void OnPlayPauseButtonClicked()
+    {
+        gameIsPaused = !gameIsPaused;
+        
+        // Refresh button sprite
+        Image buttonImage = playPauseButton.GetComponent<Image>();
+        if (buttonImage != null)
+        {
+            buttonImage.sprite = gameIsPaused ? playSprite : pauseSprite;
+        }
+        
+        // Play or pause the game
+        Time.timeScale = gameIsPaused ? 0f : 1f;
+        
+        
+        if (!gameIsPaused && SimpleWaveManager.Instance != null && !SimpleWaveManager.Instance.WavesStarted)
+        {
+            SimpleWaveManager.Instance.StartWaves();
         }
     }
     
@@ -67,11 +127,150 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
         // Update the wave display
         UpdateWaveDisplay(currentWave, totalWaves);
         
-        // Optionally add rewards or show message
-        Debug.Log($"Wave {currentWave} completed! {totalWaves - currentWave} waves remaining.");
+        // Add rewards or show message
+        //Debug.Log($"Wave {currentWave} completed! {totalWaves - currentWave} waves remaining.");
         
-        // Example: Give bonus gold between waves
-        GameManager.Instance.AddGold(50);
+        // Give bonus gold between waves
+        //GameManager.Instance.AddGold(50);
+    }
+
+    private void Update()
+    {
+        // Update the next wave timer and skip button state
+        bool isWaiting = SimpleWaveManager.Instance != null && SimpleWaveManager.Instance.IsWaitingForNextWave;
+    
+        // Show/hide the next wave timer panel based on waiting state
+        if (isWaiting && !isNextWavePanelVisible)
+        {
+            ShowNextWavePanel();
+        }
+        else if (!isWaiting && isNextWavePanelVisible)
+        {
+            HideNextWavePanel();
+        }
+        
+        // Update the next wave timer text
+        if (isWaiting && nextWaveTimerText != null)
+        {
+            float timeRemaining = SimpleWaveManager.Instance.TimeUntilNextWave;
+            nextWaveTimerText.text = $"NEXT WAVE IN {timeRemaining:0}s";
+        }
+
+        
+        // Update skip wave button state
+        if (skipWaveButton != null)
+        {
+            // Keep the button interactable only if waiting for the next wave
+            skipWaveButton.interactable = isWaiting;
+            
+            // Handle button sprite change based on waiting state
+            Image skipButtonImage = skipWaveButton.GetComponent<Image>();
+            if (skipButtonImage != null && enabledSkipSprite != null && disabledSkipSprite != null)
+            {
+                skipButtonImage.sprite = isWaiting ? enabledSkipSprite : disabledSkipSprite;
+                
+                // Keep the button color at full alpha
+                Color buttonColor = skipButtonImage.color;
+                buttonColor.a = 1f;  
+                skipButtonImage.color = buttonColor;
+            }
+            
+            // Update button text color to full alpha
+            TextMeshProUGUI buttonText = skipWaveButton.GetComponentInChildren<TextMeshProUGUI>();
+            if (buttonText != null)
+            {
+                Color textColor = buttonText.color;
+                textColor.a = 1f;  
+                buttonText.color = textColor;
+            }
+        }
+    }
+
+    private void ShowNextWavePanel()
+    {
+        if (nextWaveTimerPanel == null) 
+        {
+            Debug.LogError("nextWaveTimerPanel is null!");
+            return;
+        }
+
+        // Verificación para depuración
+        Debug.Log($"Showing next wave panel. Current alpha: {nextWaveTimerPanel.alpha}, Active: {nextWaveTimerPanel.gameObject.activeSelf}");
+
+        if (fadeCoroutine != null)
+            StopCoroutine(fadeCoroutine);
+                
+        // Asegurarse de que el objeto esté activo antes de la animación
+        nextWaveTimerPanel.gameObject.SetActive(true);
+        
+        fadeCoroutine = StartCoroutine(FadeCanvasGroup(nextWaveTimerPanel, 0f, 1f, fadeInDuration));
+        isNextWavePanelVisible = true;
+    }
+
+    private void HideNextWavePanel()
+    {
+        if (nextWaveTimerPanel == null) 
+        {
+            Debug.LogError("nextWaveTimerPanel is null!");
+            return;
+        }
+
+        // Verificación para depuración
+        Debug.Log($"Hiding next wave panel. Current alpha: {nextWaveTimerPanel.alpha}, Active: {nextWaveTimerPanel.gameObject.activeSelf}");
+        
+        if (fadeCoroutine != null)
+            StopCoroutine(fadeCoroutine);
+                
+        fadeCoroutine = StartCoroutine(FadeCanvasGroup(nextWaveTimerPanel, 1f, 0f, fadeOutDuration));
+        isNextWavePanelVisible = false;
+    }
+
+    private IEnumerator FadeCanvasGroup(CanvasGroup canvasGroup, float startAlpha, float endAlpha, float duration)
+    {
+        if (canvasGroup == null)
+        {
+            Debug.LogError("CanvasGroup is null in FadeCanvasGroup!");
+            yield break;
+        }
+        
+        // Verificación para depuración
+        Debug.Log($"Starting fade from {startAlpha} to {endAlpha} over {duration} seconds");
+        
+        // Asegurarse de que el objeto esté activo antes de la animación
+        canvasGroup.gameObject.SetActive(true);
+        
+        // Establecer el alpha inicial
+        canvasGroup.alpha = startAlpha;
+        
+        float startTime = Time.unscaledTime;
+        float elapsedTime = 0f;
+        
+        while (elapsedTime < duration)
+        {
+            elapsedTime = Time.unscaledTime - startTime;
+            float normalizedTime = Mathf.Clamp01(elapsedTime / duration);
+            
+            canvasGroup.alpha = Mathf.Lerp(startAlpha, endAlpha, normalizedTime);
+            
+            // Depuración ocasional
+            if (elapsedTime % 0.5f < 0.02f)
+            {
+                Debug.Log($"Fade progress: {normalizedTime:F2}, Current alpha: {canvasGroup.alpha:F2}");
+            }
+            
+            yield return null;
+        }
+        
+        // Asegurar que termine con el valor correcto
+        canvasGroup.alpha = endAlpha;
+        
+        // Si estamos ocultando, desactivar el objeto para ahorrar recursos
+        if (endAlpha <= 0.01f)
+        {
+            canvasGroup.gameObject.SetActive(false);
+        }
+        
+        Debug.Log($"Fade completed: {startAlpha} -> {endAlpha}, Panel active: {canvasGroup.gameObject.activeSelf}");
     }
     
     /// <summary>
@@ -139,7 +338,7 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     {
         if (goldText != null)
         {
-            goldText.text = $"Gold: {gold}";
+            goldText.text = $"{gold}";
         }
         
         // Update tower card affordability
@@ -153,7 +352,7 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     {
         if (livesText != null)
         {
-            livesText.text = $"Lives: {lives}";
+            livesText.text = $"{lives}";
         }
     }
     
@@ -164,7 +363,7 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     {
         if (waveText != null)
         {
-            waveText.text = $"Wave: {currentWave}/{totalWaves}";
+            waveText.text = $"Wave {currentWave}/{totalWaves}";
         }
     }
     
@@ -216,7 +415,10 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     /// </summary>
     public void OnSkipWaveClicked()
     {
-        SimpleWaveManager.Instance.StartNextWave();
+        if (SimpleWaveManager.Instance != null && SimpleWaveManager.Instance.IsWaitingForNextWave)
+        {
+            SimpleWaveManager.Instance.StartNextWave();
+        }
     }
     
     #endregion

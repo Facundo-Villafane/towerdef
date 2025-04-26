@@ -12,6 +12,7 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
     [SerializeField] private float timeBetweenWaves = 20f;
     [SerializeField] private float spawnInterval = 1f;
     [SerializeField] private Transform enemyParent;
+    public bool WavesStarted { get; private set; } = false;
     
     [Header("Enemy Prefabs")]
     [SerializeField] private GameObject[] enemyPrefabs;
@@ -21,11 +22,14 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
     private int enemiesRemainingInWave = 0;
     private float waveTimer = 0f;
     private bool wavesActive = false;
+    public bool IsWaitingForNextWave => enemiesRemainingInWave <= 0 && wavesActive && currentWave < totalWaves;
+    public float TimeUntilNextWave => waveTimer;
     
     // Events
     public System.Action<int, int> OnWaveStarted;
     public System.Action<int, int> OnWaveCompleted;
     public System.Action<int> OnAllWavesCompleted;
+    
     
     protected override void OnAwake()
     {
@@ -76,6 +80,7 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
     {
         Debug.Log("StartWaves called - beginning wave spawning");
         wavesActive = true;
+        WavesStarted = true; 
         StartNextWave();
     }
     

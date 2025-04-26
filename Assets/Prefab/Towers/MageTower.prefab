@@ -224,7 +224,7 @@ MonoBehaviour:
   towerName: 
   range: 1.9
   attackSpeed: 1.3
-  damage: 17
+  damage: 6
   cost: 150
   upgradeLevel: 1
   maxUpgradeLevel: 3
@@ -233,7 +233,7 @@ MonoBehaviour:
   magicProjectilePrefab: {fileID: 2872942876446563151, guid: 20d1c31963114234e917b11bd320e098, type: 3}
   shootPoint: {fileID: 4298339574643981558}
   projectileSpeed: 8
-  splashRadius: 2
+  splashRadius: 0.28
   mageAnimator: {fileID: 1654337348676353899}
 --- !u!95 &2500126567717528902
 Animator:
