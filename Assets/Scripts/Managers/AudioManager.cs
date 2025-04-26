@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Audio;
+using System.Collections;
 
 public class AudioManager : MonoBehaviour
 {
@@ -18,6 +19,8 @@ public class AudioManager : MonoBehaviour
     [Header("Clips de Audio")]
     [SerializeField] private AudioClip buttonClickSound;
     [SerializeField] private AudioClip menuOpenSound;
+
+    private Coroutine musicTransitionCoroutine; // ToHandle music transitions
 
     // Nombres de los parámetros expuestos en el AudioMixer
     private const string MASTER_VOLUME = "MasterVolume";
@@ -162,12 +165,66 @@ public class AudioManager : MonoBehaviour
     }
 
     // Cambiar música
-    public void ChangeMusic(AudioClip music)
+    public void ChangeMusic(AudioClip newMusic, bool fadeTransition = true, float fadeTime = 1.0f)
     {
-        if (music != null && musicSource != null)
+        if (musicSource == null)
+            return;
+            
+        // Si no hay cambio real de música, no hacer nada
+        if (musicSource.clip == newMusic && musicSource.isPlaying)
+            return;
+            
+        // Detener cualquier transición en progreso
+        if (musicTransitionCoroutine != null)
+            StopCoroutine(musicTransitionCoroutine);
+        
+        // Si queremos transición suave y hay música reproduciéndose
+        if (fadeTransition && musicSource.isPlaying)
         {
-            musicSource.clip = music;
-            musicSource.Play();
+            musicTransitionCoroutine = StartCoroutine(CrossFadeMusic(newMusic, fadeTime));
         }
+        else
+        {
+            // Cambio directo sin transición
+            musicSource.clip = newMusic;
+            if (newMusic != null)
+                musicSource.Play();
+            else
+                musicSource.Stop();
+        }
+    }
+
+    private IEnumerator CrossFadeMusic(AudioClip newMusic, float fadeTime)
+    {
+        // Guarda el volumen original
+        float startVolume = musicSource.volume;
+        
+        // Fade out
+        for (float t = 0; t < fadeTime; t += Time.deltaTime)
+        {
+            musicSource.volume = Mathf.Lerp(startVolume, 0, t / fadeTime);
+            yield return null;
+        }
+        
+        // Cambia la música
+        musicSource.clip = newMusic;
+        
+        // Si hay nueva música, iniciamos el fade in
+        if (newMusic != null)
+        {
+            musicSource.Play();
+            
+            // Fade in
+            for (float t = 0; t < fadeTime; t += Time.deltaTime)
+            {
+                musicSource.volume = Mathf.Lerp(0, startVolume, t / fadeTime);
+                yield return null;
+            }
+        }
+        
+        // Asegurarse de que el volumen quede exactamente como estaba
+        musicSource.volume = startVolume;
+        
+        musicTransitionCoroutine = null;
     }
 }
