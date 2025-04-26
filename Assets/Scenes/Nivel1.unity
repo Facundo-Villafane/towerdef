@@ -21788,7 +21788,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 341765826830dcf42bec22f1a5cdf718, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  totalWaves: 10
+  totalWaves: 3
   timeBetweenWaves: 20
   spawnInterval: 1
   enemyParent: {fileID: 1584357375}
@@ -25054,7 +25054,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   startingLives: 20
-  startingGold: 500
+  startingGold: 200
 --- !u!1 &1508083241
 GameObject:
   m_ObjectHideFlags: 0

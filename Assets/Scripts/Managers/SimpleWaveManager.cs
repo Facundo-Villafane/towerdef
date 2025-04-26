@@ -8,7 +8,7 @@ using UnityEngine;
 public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
 {
     [Header("Wave Settings")]
-    [SerializeField] private int totalWaves = 10;
+    [SerializeField] private int totalWaves = 3;
     [SerializeField] private float timeBetweenWaves = 20f;
     [SerializeField] private float spawnInterval = 1f;
     [SerializeField] private Transform enemyParent;
@@ -49,7 +49,7 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         {
             waveTimer -= Time.deltaTime;
             
-            if (waveTimer <= 0)
+            if (waveTimer <= 0 && currentWave < totalWaves) // Añadir verificación adicional
             {
                 StartNextWave();
             }
@@ -144,26 +144,35 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
     /// </summary>
     public void StartNextWave()
     {
+        if (!wavesActive) return;
+
         currentWave++;
-        Debug.Log($"Starting wave {currentWave} of {totalWaves}");
+        Debug.Log("Current Wave: " + currentWave + " Total Waves: " + totalWaves);
         
         // Check if all waves are completed
         if (currentWave > totalWaves)
         {
             Debug.Log("All waves completed!");
             OnAllWavesCompleted?.Invoke(100);
+            wavesActive = false; // Detener el sistema de oleadas
+
+            // Llamamos a la función de victoria del GameManager
+            GameManager.Instance.Victory();
+
             return;
         }
+        // Si todavía hay oleadas por completar
+        Debug.Log("Starting wave " + currentWave);
         
-        // Calculate enemies for this wave
+        
+        // Calcular enemigos para esta oleada
         int enemyCount = 5 + (currentWave * 2);
         enemiesRemainingInWave = enemyCount;
         
-        // Notify listeners
-        Debug.Log($"Invoking OnWaveStarted event with {currentWave}, {totalWaves}");
+        // Notificar a los oyentes
         OnWaveStarted?.Invoke(currentWave, totalWaves);
         
-        // Start spawning enemies
+        // Iniciar el spawn de enemigos
         StartCoroutine(SpawnEnemies(enemyCount));
     }
     
@@ -277,6 +286,7 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
             OnWaveCompleted?.Invoke(currentWave, totalWaves);
         }
     }
+    
     
     public int GetCurrentWave()
     {

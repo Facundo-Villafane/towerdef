@@ -86,6 +86,7 @@ public class GameManager : Singleton<GameManager>
     {
         if (currentState == newState) return;
 
+        Debug.Log("Changing state to: " + newState);
         currentState = newState;
         OnGameStateChanged?.Invoke(currentState);
 
@@ -139,6 +140,7 @@ public class GameManager : Singleton<GameManager>
     public void LoseLife(int amount)
     {
         lives -= amount;
+        Debug.Log("Lives remaining: " + lives);
         OnLivesChanged?.Invoke(lives);
 
         if (lives <= 0)
@@ -146,6 +148,7 @@ public class GameManager : Singleton<GameManager>
             ChangeState(GameState.Defeat);
         }
     }
+    
 
     /// <summary>
     /// Victory condition
@@ -179,15 +182,12 @@ public class GameManager : Singleton<GameManager>
     /// </summary>
     private void ShowVictoryScreen()
     {
-        ShowEndGameScreen(
-            "VictoryPanel",
-            "VictoryScene",
-            () =>
-            {
-                int finalScore = CalculateFinalScore();
-                PlayerPrefs.SetInt("FinalScore", finalScore);
-            }
-        );
+        // Guardar datos relevantes
+        int finalScore = CalculateFinalScore();
+        PlayerPrefs.SetInt("FinalScore", finalScore);
+        
+        // Cargar directamente la escena de victoria después de un pequeño retraso
+        StartCoroutine(LoadSceneAfterDelay("VictoryScene", 1f));
     }
 
     /// <summary>
@@ -195,17 +195,14 @@ public class GameManager : Singleton<GameManager>
     /// </summary>
     private void ShowDefeatScreen()
     {
-        ShowEndGameScreen(
-            "DefeatPanel",
-            "DefeatScene",
-            () =>
-            {
-                if (SimpleWaveManager.Instance != null)
-                {
-                    PlayerPrefs.SetInt("WaveReached", SimpleWaveManager.Instance.GetCurrentWave());
-                }
-            }
-        );
+        // Guardar datos relevantes
+        if (SimpleWaveManager.Instance != null)
+        {
+            PlayerPrefs.SetInt("WaveReached", SimpleWaveManager.Instance.GetCurrentWave());
+        }
+        
+        // Cargar directamente la escena de derrota después de un pequeño retraso
+        StartCoroutine(LoadSceneAfterDelay("DefeatScene", 1f));
     }
 
     /// <summary>
@@ -222,7 +219,7 @@ public class GameManager : Singleton<GameManager>
         }
         else
         {
-            StartCoroutine(LoadSceneAfterDelay(sceneName, 2f));
+            StartCoroutine(LoadSceneAfterDelay(sceneName, 1f));
         }
     }
 
@@ -232,6 +229,11 @@ public class GameManager : Singleton<GameManager>
     private IEnumerator LoadSceneAfterDelay(string sceneName, float delay)
     {
         yield return new WaitForSeconds(delay);
+        
+        // Asegurarse de que el tiempo esté normal antes de cambiar de escena
+        Time.timeScale = 1f;
+        
+        // Cargar la escena
         SceneManager.LoadScene(sceneName);
     }
 

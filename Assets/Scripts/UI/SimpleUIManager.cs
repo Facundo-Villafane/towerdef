@@ -123,8 +123,8 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     // Method to handle main menu button click
     public void OnMainMenuClicked()
     {
-        // Cargar la escena del menú principal
-        //SceneManager.LoadScene("MainMenu");
+        //Cargar la escena del menú principal
+        SceneManager.LoadScene("MainMenu");
     }
 
     // Clean up event listeners!!!!!
@@ -244,12 +244,12 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     {
         if (nextWaveTimerPanel == null) 
         {
-            Debug.LogError("nextWaveTimerPanel is null!");
+            //Debug.LogError("nextWaveTimerPanel is null!");
             return;
         }
 
         // Verificación para depuración
-        Debug.Log($"Showing next wave panel. Current alpha: {nextWaveTimerPanel.alpha}, Active: {nextWaveTimerPanel.gameObject.activeSelf}");
+        //Debug.Log($"Showing next wave panel. Current alpha: {nextWaveTimerPanel.alpha}, Active: {nextWaveTimerPanel.gameObject.activeSelf}");
 
         if (fadeCoroutine != null)
             StopCoroutine(fadeCoroutine);
@@ -265,12 +265,12 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     {
         if (nextWaveTimerPanel == null) 
         {
-            Debug.LogError("nextWaveTimerPanel is null!");
+            //Debug.LogError("nextWaveTimerPanel is null!");
             return;
         }
 
         // Verificación para depuración
-        Debug.Log($"Hiding next wave panel. Current alpha: {nextWaveTimerPanel.alpha}, Active: {nextWaveTimerPanel.gameObject.activeSelf}");
+        //Debug.Log($"Hiding next wave panel. Current alpha: {nextWaveTimerPanel.alpha}, Active: {nextWaveTimerPanel.gameObject.activeSelf}");
         
         if (fadeCoroutine != null)
             StopCoroutine(fadeCoroutine);
@@ -283,12 +283,12 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     {
         if (canvasGroup == null)
         {
-            Debug.LogError("CanvasGroup is null in FadeCanvasGroup!");
+            //Debug.LogError("CanvasGroup is null in FadeCanvasGroup!");
             yield break;
         }
         
         // Verificación para depuración
-        Debug.Log($"Starting fade from {startAlpha} to {endAlpha} over {duration} seconds");
+        //Debug.Log($"Starting fade from {startAlpha} to {endAlpha} over {duration} seconds");
         
         // Asegurarse de que el objeto esté activo antes de la animación
         canvasGroup.gameObject.SetActive(true);
@@ -309,7 +309,7 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
             // Depuración ocasional
             if (elapsedTime % 0.5f < 0.02f)
             {
-                Debug.Log($"Fade progress: {normalizedTime:F2}, Current alpha: {canvasGroup.alpha:F2}");
+                //Debug.Log($"Fade progress: {normalizedTime:F2}, Current alpha: {canvasGroup.alpha:F2}");
             }
             
             yield return null;
@@ -324,7 +324,7 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
             canvasGroup.gameObject.SetActive(false);
         }
         
-        Debug.Log($"Fade completed: {startAlpha} -> {endAlpha}, Panel active: {canvasGroup.gameObject.activeSelf}");
+        //Debug.Log($"Fade completed: {startAlpha} -> {endAlpha}, Panel active: {canvasGroup.gameObject.activeSelf}");
     }
     
     /// <summary>
