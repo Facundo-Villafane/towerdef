@@ -15,7 +15,7 @@ public class VolumeSlider : MonoBehaviour
     
     private void Start()
     {
-        // Si no se asignó el slider, intentar obtenerlo del mismo objeto
+        // If ther no slider assigned, try to get it from the GameObject
         if (slider == null)
             slider = GetComponent<Slider>();
             
@@ -25,12 +25,12 @@ public class VolumeSlider : MonoBehaviour
             return;
         }
         
-        // Cargar valor guardado
+        // Load saved volume value
         string prefName = volumeType.ToString() + "Volume";
         float savedVolume = PlayerPrefs.GetFloat(prefName, 1f);
         slider.value = savedVolume;
         
-        // Configurar listener
+        // Configure listeners
         slider.onValueChanged.AddListener(OnSliderValueChanged);
     }
     
@@ -50,7 +50,7 @@ public class VolumeSlider : MonoBehaviour
             case VolumeType.SFX:
                 AudioManager.Instance.SetSFXVolume(value);
                 
-                // Opcional: Reproducir un sonido al ajustar el volumen de SFX
+                
                 if (value > 0.01f)
                     AudioManager.Instance.PlayButtonClick();
                 break;

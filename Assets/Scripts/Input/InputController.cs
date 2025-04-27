@@ -69,11 +69,11 @@ public class InputController : MonoBehaviour
             UpdateTowerPreview();
         }
         
-        // Handle undo with Ctrl+Z
-        if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.Z))
-        {
-            CommandManager.Instance.Undo();
-        }
+        // Handle undo with Ctrl+Z ** Not implemented yet **
+        //if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.Z))
+        //{
+        //    CommandManager.Instance.Undo();
+        //}
     }
     
     /// <summary>

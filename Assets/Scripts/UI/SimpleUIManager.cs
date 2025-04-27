@@ -15,7 +15,7 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     [SerializeField] private TextMeshProUGUI livesText;
     [SerializeField] private TextMeshProUGUI waveText;
     [SerializeField] private TextMeshProUGUI nextWaveTimerText; 
-    [SerializeField] private Button skipWaveButton; // Button for skip waves
+    [SerializeField] private Button skipWaveButton; 
     [SerializeField] private Sprite enabledSkipSprite;
     [SerializeField] private Sprite disabledSkipSprite;
     [SerializeField] private Button playPauseButton;
@@ -90,7 +90,7 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
             }
         }
         // Start the game automatically after a short delay
-        // **This is just for testing purposes, will remove in production**
+        
         Invoke("StartWavesAutomatically", 1.0f);
 
         // To sed Other buttons
@@ -115,7 +115,7 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     // Method to handle restart level button click
     public void OnRestartLevelClicked()
     {
-        // Simplemente recarga la escena actual
+        // Reload the current scene to restart the level
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
@@ -123,11 +123,11 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     // Method to handle main menu button click
     public void OnMainMenuClicked()
     {
-        //Cargar la escena del menú principal
+        //Load the main menu scene
         SceneManager.LoadScene("MainMenu");
     }
 
-    // Clean up event listeners!!!!!
+    // Clean up event listeners
     private void OnDestroy()
     {
         if (restartWaveButton != null)
@@ -139,7 +139,7 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
         if (mainMenuButton != null)
             mainMenuButton.onClick.RemoveListener(OnMainMenuClicked);
             
-        // Clean up other listeners!!!!!
+        
     }
 
     // Method to handle Start waves automatically
@@ -148,7 +148,7 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
         if (SimpleWaveManager.Instance != null && !SimpleWaveManager.Instance.WavesStarted)
         {
             SimpleWaveManager.Instance.StartWaves();
-            Debug.Log("Waves started automatically");
+            //Debug.Log("Waves started automatically");
         }
     }
 
@@ -181,11 +181,9 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
         // Update the wave display
         UpdateWaveDisplay(currentWave, totalWaves);
         
-        // Add rewards or show message
-        //Debug.Log($"Wave {currentWave} completed! {totalWaves - currentWave} waves remaining.");
-        
         // Give bonus gold between waves
         //GameManager.Instance.AddGold(50);
+        
     }
 
     private void Update()
@@ -248,13 +246,13 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
             return;
         }
 
-        // Verificación para depuración
+        // Debugging log for visibility
         //Debug.Log($"Showing next wave panel. Current alpha: {nextWaveTimerPanel.alpha}, Active: {nextWaveTimerPanel.gameObject.activeSelf}");
 
         if (fadeCoroutine != null)
             StopCoroutine(fadeCoroutine);
                 
-        // Asegurarse de que el objeto esté activo antes de la animación
+        // Make sure the object is active before starting the fade
         nextWaveTimerPanel.gameObject.SetActive(true);
         
         fadeCoroutine = StartCoroutine(FadeCanvasGroup(nextWaveTimerPanel, 0f, 1f, fadeInDuration));
@@ -269,7 +267,7 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
             return;
         }
 
-        // Verificación para depuración
+        // Debugging log for visibility
         //Debug.Log($"Hiding next wave panel. Current alpha: {nextWaveTimerPanel.alpha}, Active: {nextWaveTimerPanel.gameObject.activeSelf}");
         
         if (fadeCoroutine != null)
@@ -287,13 +285,10 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
             yield break;
         }
         
-        // Verificación para depuración
-        //Debug.Log($"Starting fade from {startAlpha} to {endAlpha} over {duration} seconds");
-        
-        // Asegurarse de que el objeto esté activo antes de la animación
+        // Make sure the object is active before starting the fade
         canvasGroup.gameObject.SetActive(true);
         
-        // Establecer el alpha inicial
+        // Set the initial alpha value
         canvasGroup.alpha = startAlpha;
         
         float startTime = Time.unscaledTime;
@@ -306,7 +301,7 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
             
             canvasGroup.alpha = Mathf.Lerp(startAlpha, endAlpha, normalizedTime);
             
-            // Depuración ocasional
+            // Debugging log for fade progress
             if (elapsedTime % 0.5f < 0.02f)
             {
                 //Debug.Log($"Fade progress: {normalizedTime:F2}, Current alpha: {canvasGroup.alpha:F2}");
@@ -332,7 +327,7 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     /// </summary>
     private void OnAllWavesCompletedHandler(int finalScore)
     {
-        Debug.Log($"All waves completed! Final score: {finalScore}");
+        //Debug.Log($"All waves completed! Final score: {finalScore}");
         
         // Trigger victory condition
         GameManager.Instance.Victory();
@@ -451,18 +446,18 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     /// <summary>
     /// Handles speed up button click
     /// </summary>
-    public void OnSpeedUpClicked()
-    {
+    //public void OnSpeedUpClicked()
+    //{
         // Toggle game speed
-        if (Time.timeScale == 1f)
-        {
-            Time.timeScale = 2f;
-        }
-        else
-        {
-            Time.timeScale = 1f;
-        }
-    }
+    //    if (Time.timeScale == 1f)
+    //    {
+    //        Time.timeScale = 2f;
+    //    }
+    //    else
+    //    {
+    //        Time.timeScale = 1f;
+    //    }
+    //}
     
     /// <summary>
     /// Handles skip wave button click
@@ -483,7 +478,7 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     public void ShowVictoryPanel()
     {
         // Implement victory panel logic
-        Debug.Log("Showing victory panel");
+        //Debug.Log("Showing victory panel");
         
         // Find and activate victory panel
         Transform victoryPanel = transform.Find("VictoryPanel");
@@ -499,7 +494,7 @@ public class SimpleUIManager : Singleton<SimpleUIManager>
     public void ShowDefeatPanel()
     {
         // Implement defeat panel logic
-        Debug.Log("Showing defeat panel");
+        //Debug.Log("Showing defeat panel");
         
         // Find and activate defeat panel
         Transform defeatPanel = transform.Find("DefeatPanel");

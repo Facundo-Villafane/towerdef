@@ -15,7 +15,7 @@ public class SceneMusic : MonoBehaviour
         }
     }
     
-    // Opcional: Para activar música en momentos específicos
+    // To play the music on some moments in the game ** Not implemented yet **
     public void PlaySceneMusic()
     {
         if (sceneMusic != null && AudioManager.Instance != null)

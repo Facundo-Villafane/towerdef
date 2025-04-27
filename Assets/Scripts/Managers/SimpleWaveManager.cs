@@ -49,10 +49,17 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         {
             waveTimer -= Time.deltaTime;
             
-            if (waveTimer <= 0 && currentWave < totalWaves) // Añadir verificación adicional
+            if (waveTimer <= 0 && currentWave < totalWaves) 
             {
                 StartNextWave();
             }
+        }
+
+        // For debugging purposes, trigger victory manually with V key
+        if (Input.GetKeyDown(KeyCode.V))
+        {
+            Debug.Log("Victory triggered manually with V key");
+            GameManager.Instance.Victory();
         }
     }
     
@@ -63,12 +70,12 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         enemiesRemainingInWave = 0;
         wavesActive = false;
         
-        Debug.Log($"SimpleWaveManager initialized with level {level} and difficulty {difficulty}");
+        //Debug.Log($"SimpleWaveManager initialized with level {level} and difficulty {difficulty}");
     }
     
     public void StartWaves()
     {
-        Debug.Log("StartWaves called - beginning wave spawning");
+        //Debug.Log("StartWaves called - beginning wave spawning");
         wavesActive = true;
         WavesStarted = true; 
         StartNextWave();
@@ -102,7 +109,7 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
     /// </summary>
     public void ResetWaves()
     {
-        Debug.Log("ResetWaves: Resetting all wave state");
+        //Debug.Log("ResetWaves: Resetting all wave state");
         
         // Stop all coroutines first
         StopAllCoroutines();
@@ -112,7 +119,7 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         
         // Reset ALL variables
         currentWave = 0;
-        Debug.Log($"ResetWaves: currentWave reset to {currentWave}");
+        //Debug.Log($"ResetWaves: currentWave reset to {currentWave}");
         
         enemiesRemainingInWave = 0;
         wavesActive = false;
@@ -147,32 +154,26 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         if (!wavesActive) return;
 
         currentWave++;
-        Debug.Log("Current Wave: " + currentWave + " Total Waves: " + totalWaves);
+        //Debug.Log("Current Wave: " + currentWave + " Total Waves: " + totalWaves);
         
         // Check if all waves are completed
         if (currentWave > totalWaves)
         {
-            Debug.Log("All waves completed!");
+            //Debug.Log("All waves completed!");
             OnAllWavesCompleted?.Invoke(100);
-            wavesActive = false; // Detener el sistema de oleadas
-
-            // Llamamos a la función de victoria del GameManager
-            GameManager.Instance.Victory();
-
+            wavesActive = false; 
             return;
         }
-        // Si todavía hay oleadas por completar
-        Debug.Log("Starting wave " + currentWave);
         
         
-        // Calcular enemigos para esta oleada
+        // Calculate number of enemies for this wave
         int enemyCount = 5 + (currentWave * 2);
         enemiesRemainingInWave = enemyCount;
         
-        // Notificar a los oyentes
+        // Notify wave started
         OnWaveStarted?.Invoke(currentWave, totalWaves);
         
-        // Iniciar el spawn de enemigos
+        // Start spawning enemies
         StartCoroutine(SpawnEnemies(enemyCount));
     }
     
@@ -182,7 +183,7 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
         
         if (path == null || path.Count < 2)
         {
-            Debug.LogError("No valid path found for enemies");
+            //Debug.LogError("No valid path found for enemies");
             yield break;
         }
         
@@ -228,7 +229,7 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
     {
         if (enemyPrefabs == null || enemyPrefabs.Length == 0)
         {
-            Debug.LogError("No enemy prefabs assigned!");
+            //Debug.LogError("No enemy prefabs assigned!");
             return null;
         }
             
@@ -284,6 +285,33 @@ public class SimpleWaveManager : Singleton<SimpleWaveManager>, IWaveManager
             // Notify wave completed
             Debug.Log($"Wave {currentWave} completed!");
             OnWaveCompleted?.Invoke(currentWave, totalWaves);
+            
+            // Verificar si esta fue la última oleada
+            if (currentWave >= totalWaves)
+            {
+                Debug.Log("Final wave completed! Triggering victory sequence");
+                StartCoroutine(DelayedVictory());
+            }
+        }
+    }
+    
+    //For debugging purposes, to test the victory sequence
+    private IEnumerator DelayedVictory()
+    {
+        
+        yield return new WaitForSeconds(2f);
+        
+        Debug.Log("Delayed victory sequence activated");
+        // Invocar el evento de oleadas completadas
+        OnAllWavesCompleted?.Invoke(100);
+        
+        // Como respaldo, llamar directamente a Victory si algo falla con el evento
+        yield return new WaitForSeconds(0.5f);
+        
+        if (GameManager.Instance.CurrentState != GameManager.GameState.Victory)
+        {
+            //Debug.Log("Backup: Directly calling Victory method");
+            GameManager.Instance.Victory();
         }
     }
     

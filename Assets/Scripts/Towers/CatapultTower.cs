@@ -46,19 +46,19 @@ public class CatapultTower : Tower
     {
         if (rockPrefab == null)
         {
-            Debug.LogError("Rock prefab not assigned!");
+            //Debug.LogError("Rock prefab not assigned!");
             return;
         }
         
         if (shootPoint == null)
         {
-            Debug.LogError("Shoot point not assigned!");
+            //Debug.LogError("Shoot point not assigned!");
             return;
         }
         
         if (currentTarget == null)
         {
-            Debug.LogError("No target to shoot at!");
+            //Debug.LogError("No target to shoot at!");
             return;
         }
         
@@ -70,11 +70,11 @@ public class CatapultTower : Tower
         {
             // Initialize rock with target enemy, damage and splash radius
             rock.Initialize(currentTarget, damage, projectileSpeed, splashRadius);
-            Debug.Log($"Rock launched with speed: {projectileSpeed}");
+            //Debug.Log($"Rock launched with speed: {projectileSpeed}");
         }
         else
         {
-            Debug.LogError("Rock component not found on prefab!");
+            //Debug.LogError("Rock component not found on prefab!");
             Destroy(rockObj);
         }
     }

@@ -147,25 +147,25 @@ public abstract class Enemy : MonoBehaviour, IDamageable
         
         isAlive = false;
         
-        // Desactivar la barra de vida inmediatamente
+        // Deactivate the enemy's health bar 
         Transform healthBar = transform.Find("Healthbar");
         if (healthBar != null)
         {
             healthBar.gameObject.SetActive(false);
         }
         
-        // Activar animación de muerte
+        // Activate the death animation
         Animator animator = GetComponent<Animator>();
         if (animator != null)
         {
             animator.SetTrigger("Die");
             
-            // Esperar a que termine la animación antes de destruir
+            // Wait for the death animation to finish before destroying the object
             Destroy(gameObject, 1.0f);
         }
         else
         {
-            // Si no hay animator, destruir inmediatamente
+            // If there's no animator, destroy immediately
             Destroy(gameObject, 0.5f);
         }
         

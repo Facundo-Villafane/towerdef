@@ -116,16 +116,16 @@ public abstract class Tower : MonoBehaviour, IUpgradeable
     /// <summary>
     /// Sells the tower and returns the refund amount
     /// </summary>
-    public virtual int Sell()
-    {
-        int refundAmount = Mathf.RoundToInt(cost * 0.7f);
-        OnTowerSold?.Invoke(this);
+    //public virtual int Sell()
+    //{
+     //   int refundAmount = Mathf.RoundToInt(cost * 0.7f);
+    //    OnTowerSold?.Invoke(this);
         
         // Destroy the tower
-        Destroy(gameObject);
+    //    Destroy(gameObject);
         
-        return refundAmount;
-    }
+    //    return refundAmount;
+    //}
     
     /// <summary>
     /// Updates the size of the range indicator
@@ -146,13 +146,13 @@ public abstract class Tower : MonoBehaviour, IUpgradeable
         // Clear and repopulate enemies in range
         enemiesInRange.Clear();
 
-        // Verificar la capa Enemy
+        // Check Enemy layer mask
         int enemyLayerMask = LayerMask.GetMask("Enemy");       
         
         // Find all enemies in range
         Collider2D[] colliders = Physics2D.OverlapCircleAll(transform.position, range, enemyLayerMask);
         
-        // Intenta detectar enemigos sin filtro de capa
+        // Try find enemies without layer mask (for testing purposes)
         Collider2D[] allColliders = Physics2D.OverlapCircleAll(transform.position, range);
         
         foreach (Collider2D collider in colliders)
@@ -271,10 +271,10 @@ public abstract class Tower : MonoBehaviour, IUpgradeable
     [ContextMenu("Test Detection")]
     public void TestDetection()
     {
-        Debug.Log("======= PRUEBA DE DETECCIÓN MANUAL =======");
+        
         Debug.Log($"Tower position: {transform.position}, Range: {range}");
         
-        // Detectar TODOS los colliders sin filtro de capa
+        // Detect ALL colliders in range (any layer)
         Collider2D[] allColliders = Physics2D.OverlapCircleAll(transform.position, range);
         Debug.Log($"Total colliders detected (any layer): {allColliders.Length}");
         
@@ -283,14 +283,14 @@ public abstract class Tower : MonoBehaviour, IUpgradeable
             Debug.Log($"- Collider: {col.name}, Layer: {LayerMask.LayerToName(col.gameObject.layer)}");
         }
         
-        // Detectar solo en capa Enemy
+        // Detect only Enemy layer
         int enemyMask = LayerMask.GetMask("Enemy");
         Debug.Log($"Enemy layer mask: {enemyMask}");
         
         Collider2D[] enemyColliders = Physics2D.OverlapCircleAll(transform.position, range, enemyMask);
         Debug.Log($"Enemy colliders detected: {enemyColliders.Length}");
         
-        // Verificar todos los GameObjects con Tag "Enemy"
+        // Check all tags Enemy
         GameObject[] enemyObjects = GameObject.FindGameObjectsWithTag("Enemy");
         Debug.Log($"GameObjects with Enemy tag: {enemyObjects.Length}");
         
@@ -300,7 +300,6 @@ public abstract class Tower : MonoBehaviour, IUpgradeable
             Debug.Log($"- Enemy: {enemy.name}, Distance: {distance}, Layer: {LayerMask.LayerToName(enemy.layer)}");
         }
         
-        Debug.Log("======= FIN DE PRUEBA =======");
     }
     
     /// <summary>

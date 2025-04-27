@@ -43,12 +43,12 @@ public class MainMenuController : MonoBehaviour
 
     private void LoadAudioSettings()
     {
-        // Cargar configuraciones guardadas (si existen)
+        // Loading saved volume settings from PlayerPrefs
         float masterVolume = PlayerPrefs.GetFloat("MasterVolume", 1.0f);
         float musicVolume = PlayerPrefs.GetFloat("MusicVolume", 1.0f);
         float sfxVolume = PlayerPrefs.GetFloat("SFXVolume", 1.0f);
         
-        // Aplicar a los sliders
+        // Appying loaded settings to sliders
         if (masterVolumeSlider != null) 
         {
             masterVolumeSlider.value = masterVolume;
@@ -67,7 +67,7 @@ public class MainMenuController : MonoBehaviour
             sfxVolumeSlider.onValueChanged.AddListener(SetSFXVolume);
         }
         
-        // Aplicar volumen a los mixer groups de audio (si usas AudioMixer)
+        // Apply settings to AudioMixer
         ApplyAudioSettings();
     }
 

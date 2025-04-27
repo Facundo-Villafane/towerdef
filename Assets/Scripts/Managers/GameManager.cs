@@ -86,19 +86,19 @@ public class GameManager : Singleton<GameManager>
     {
         if (currentState == newState) return;
 
-        Debug.Log("Changing state to: " + newState);
+        //Debug.Log("Changing state to: " + newState);
         currentState = newState;
         OnGameStateChanged?.Invoke(currentState);
 
         switch (currentState)
         {
             case GameState.Victory:
-                Debug.Log("Victory!");
+                //Debug.Log("Victory!");
                 ShowVictoryScreen();
                 break;
 
             case GameState.Defeat:
-                Debug.Log("Defeat!");
+                //Debug.Log("Defeat!");
                 ShowDefeatScreen();
                 break;
         }
@@ -140,7 +140,7 @@ public class GameManager : Singleton<GameManager>
     public void LoseLife(int amount)
     {
         lives -= amount;
-        Debug.Log("Lives remaining: " + lives);
+        //Debug.Log("Lives remaining: " + lives);
         OnLivesChanged?.Invoke(lives);
 
         if (lives <= 0)
@@ -155,6 +155,7 @@ public class GameManager : Singleton<GameManager>
     /// </summary>
     public void Victory()
     {
+        //Debug.Log("GameManager.Victory() called!");
         ChangeState(GameState.Victory);
     }
 
@@ -182,11 +183,13 @@ public class GameManager : Singleton<GameManager>
     /// </summary>
     private void ShowVictoryScreen()
     {
-        // Guardar datos relevantes
+        //Debug.Log("ShowVictoryScreen() started - calculating final score");
+        // Save the current wave reached
         int finalScore = CalculateFinalScore();
         PlayerPrefs.SetInt("FinalScore", finalScore);
         
-        // Cargar directamente la escena de victoria después de un pequeño retraso
+        //Debug.Log("Loading victory scene after delay...");
+        // Load the victory scene after a small delay
         StartCoroutine(LoadSceneAfterDelay("VictoryScene", 1f));
     }
 
@@ -195,13 +198,13 @@ public class GameManager : Singleton<GameManager>
     /// </summary>
     private void ShowDefeatScreen()
     {
-        // Guardar datos relevantes
+        // Save the current wave reached
         if (SimpleWaveManager.Instance != null)
         {
             PlayerPrefs.SetInt("WaveReached", SimpleWaveManager.Instance.GetCurrentWave());
         }
         
-        // Cargar directamente la escena de derrota después de un pequeño retraso
+        // Load directly the defeat scene after a small delay
         StartCoroutine(LoadSceneAfterDelay("DefeatScene", 1f));
     }
 
@@ -228,13 +231,23 @@ public class GameManager : Singleton<GameManager>
     /// </summary>
     private IEnumerator LoadSceneAfterDelay(string sceneName, float delay)
     {
+        //Debug.Log($"Starting delay of {delay} seconds before loading {sceneName}");
         yield return new WaitForSeconds(delay);
         
-        // Asegurarse de que el tiempo esté normal antes de cambiar de escena
+        //Debug.Log($"Delay completed. Setting timeScale to 1 and loading {sceneName}");
+        // Make sure timeScale is set to 1 before loading the scene
         Time.timeScale = 1f;
         
-        // Cargar la escena
-        SceneManager.LoadScene(sceneName);
+        // Chack if the scene is in build settings
+        if (SceneUtility.GetBuildIndexByScenePath(sceneName) >= 0)
+        {
+            //Debug.Log($"Scene {sceneName} exists in build settings, loading now");
+            SceneManager.LoadScene(sceneName);
+        }
+        else
+        {
+            //Debug.LogError($"Scene {sceneName} is not in build settings! Add it to build settings in File > Build Settings.");
+        }
     }
 
     /// <summary>

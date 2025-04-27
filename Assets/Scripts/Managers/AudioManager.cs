@@ -22,12 +22,12 @@ public class AudioManager : MonoBehaviour
 
     private Coroutine musicTransitionCoroutine; // ToHandle music transitions
 
-    // Nombres de los parámetros expuestos en el AudioMixer
+    // Names of Audio Mixer parameters
     private const string MASTER_VOLUME = "MasterVolume";
     private const string MUSIC_VOLUME = "MusicVolume";
     private const string SFX_VOLUME = "SFXVolume";
 
-    // Para evitar llamadas repetidas
+    // To avoid unnecessary processing
     private float lastMasterVolume;
     private float lastMusicVolume;
     private float lastSfxVolume;
@@ -45,12 +45,12 @@ public class AudioManager : MonoBehaviour
             return;
         }
         
-        // Inicializar valores
+        // Start with default values
         lastMasterVolume = 1f;
         lastMusicVolume = 1f;
         lastSfxVolume = 1f;
         
-        // Cargar volúmenes guardados al iniciar
+        // Load saved volume settings
         LoadVolume();
     }
 
@@ -67,15 +67,15 @@ public class AudioManager : MonoBehaviour
     
     public void SetMasterVolume(float volume)
     {
-        // Evitar procesamiento innecesario
+        // To avoid unnecessary processing
         if (Mathf.Approximately(lastMasterVolume, volume)) return;
         lastMasterVolume = volume;
         
-        // Convertir de escala lineal (0-1) a logarítmica (dB)
+        // Convert from linear scale (0-1) to logarithmic (dB)
         float volumeDb = ConvertToDecibel(volume);
         
         bool success = audioMixer.SetFloat(MASTER_VOLUME, volumeDb);
-        Debug.Log($"Setting Master Volume: {volume} (linear) -> {volumeDb} dB, Success: {success}");
+        //Debug.Log($"Setting Master Volume: {volume} (linear) -> {volumeDb} dB, Success: {success}");
         
         PlayerPrefs.SetFloat(MASTER_VOLUME, volume);
         PlayerPrefs.Save();
@@ -83,20 +83,20 @@ public class AudioManager : MonoBehaviour
     
     public void SetMusicVolume(float volume)
     {
-        // Evitar procesamiento innecesario
+        // Avoid unnecessary processing
         if (Mathf.Approximately(lastMusicVolume, volume)) return;
         lastMusicVolume = volume;
         
-        // Convertir de escala lineal (0-1) a logarítmica (dB)
+        // Convert from linear scale (0-1) to logarithmic (dB)
         float volumeDb = ConvertToDecibel(volume);
         
         bool success = audioMixer.SetFloat(MUSIC_VOLUME, volumeDb);
-        Debug.Log($"Setting Music Volume: {volume} (linear) -> {volumeDb} dB, Success: {success}");
+        //Debug.Log($"Setting Music Volume: {volume} (linear) -> {volumeDb} dB, Success: {success}");
         
         PlayerPrefs.SetFloat(MUSIC_VOLUME, volume);
         PlayerPrefs.Save();
         
-        // También ajustar el volumen del AudioSource directamente como respaldo
+        // Adjust the volume of the AudioSource directly as a backup
         if (musicSource != null)
         {
             musicSource.volume = volume;
@@ -105,33 +105,33 @@ public class AudioManager : MonoBehaviour
     
     public void SetSFXVolume(float volume)
     {
-        // Evitar procesamiento innecesario
+        // Avoid unnecessary processing
         if (Mathf.Approximately(lastSfxVolume, volume)) return;
         lastSfxVolume = volume;
         
-        // Convertir de escala lineal (0-1) a logarítmica (dB)
+        // Convert from linear scale (0-1) to logarithmic (dB)
         float volumeDb = ConvertToDecibel(volume);
         
         bool success = audioMixer.SetFloat(SFX_VOLUME, volumeDb);
-        Debug.Log($"Setting SFX Volume: {volume} (linear) -> {volumeDb} dB, Success: {success}");
+        //Debug.Log($"Setting SFX Volume: {volume} (linear) -> {volumeDb} dB, Success: {success}");
         
         PlayerPrefs.SetFloat(SFX_VOLUME, volume);
         PlayerPrefs.Save();
         
-        // También ajustar el volumen del AudioSource directamente como respaldo
+        // Adjust the volume of the AudioSource directly as a backup
         if (sfxSource != null)
         {
             sfxSource.volume = volume;
         }
         
-        // Opcional: Reproducir un sonido al ajustar el volumen para que el usuario pueda oír el efecto
+        // Play Button Click sound to give feedback to the user
         if (volume > 0.05f && buttonClickSound != null)
         {
             PlayButtonClick();
         }
     }
     
-    // Convierte un valor entre 0 y 1 a decibeles para el mixer
+    // Convert linear volume (0-1) to decibel scale
     private float ConvertToDecibel(float volume)
     {
         // Evitar log(0) que es -infinito
@@ -142,19 +142,19 @@ public class AudioManager : MonoBehaviour
         return Mathf.Log10(volume) * 20f;
     }
 
-    // Reproducir sonido de botón
+    // Play sound for button click
     public void PlayButtonClick()
     {
         PlaySound(buttonClickSound);
     }
 
-    // Reproducir sonido de abrir menú
+    // Play sound for menu open
     public void PlayMenuOpen()
     {
         PlaySound(menuOpenSound);
     }
 
-    // Reproducir un sonido cualquiera
+    // Play sound for any AudioClip
     public void PlaySound(AudioClip clip)
     {
         if (clip != null && sfxSource != null)
@@ -164,28 +164,28 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    // Cambiar música
+    // Change music with optional fade transition
     public void ChangeMusic(AudioClip newMusic, bool fadeTransition = true, float fadeTime = 1.0f)
     {
         if (musicSource == null)
             return;
             
-        // Si no hay cambio real de música, no hacer nada
+        // If the new music is null, stop the current music
         if (musicSource.clip == newMusic && musicSource.isPlaying)
             return;
             
-        // Detener cualquier transición en progreso
+        // Stop any ongoing music transition
         if (musicTransitionCoroutine != null)
             StopCoroutine(musicTransitionCoroutine);
         
-        // Si queremos transición suave y hay música reproduciéndose
+        // Smooth transition between music clips
         if (fadeTransition && musicSource.isPlaying)
         {
             musicTransitionCoroutine = StartCoroutine(CrossFadeMusic(newMusic, fadeTime));
         }
         else
         {
-            // Cambio directo sin transición
+            // Directly change the music without fading
             musicSource.clip = newMusic;
             if (newMusic != null)
                 musicSource.Play();
@@ -196,7 +196,7 @@ public class AudioManager : MonoBehaviour
 
     private IEnumerator CrossFadeMusic(AudioClip newMusic, float fadeTime)
     {
-        // Guarda el volumen original
+        // Save the current volume to restore it later
         float startVolume = musicSource.volume;
         
         // Fade out
@@ -206,10 +206,10 @@ public class AudioManager : MonoBehaviour
             yield return null;
         }
         
-        // Cambia la música
+        // Change the music clip
         musicSource.clip = newMusic;
         
-        // Si hay nueva música, iniciamos el fade in
+        // If there new music, play it
         if (newMusic != null)
         {
             musicSource.Play();
@@ -222,7 +222,7 @@ public class AudioManager : MonoBehaviour
             }
         }
         
-        // Asegurarse de que el volumen quede exactamente como estaba
+        // Check the volume to ensure it's restored
         musicSource.volume = startVolume;
         
         musicTransitionCoroutine = null;
